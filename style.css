@@ -1,0 +1,99 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #ffffff;
+  color: #212529;
+}
+
+.topbar {
+  height: 56px;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: #ffffff;
+}
+
+.brand {
+  font-size: 14px;
+  color: #212529;
+  margin-right: 28px;
+  white-space: nowrap;
+}
+
+.nav {
+  display: flex;
+  gap: 18px;
+}
+
+.auth {
+  display: flex;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.nav a,
+.auth a {
+  text-decoration: none;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.page,
+.container {
+  width: 760px;
+  margin: 36px auto;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 18px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+thead th {
+  background: #6c757d;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1px solid #5c636a;
+  text-align: left;
+}
+
+tbody td {
+  border: 1px solid #dee2e6;
+  padding: 10px 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+button {
+  margin-top: 10px;
+  background: #6f42c1;
+  color: #ffffff;
+  border: 1px solid #6f42c1;
+  padding: 7px 14px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.info {
+  margin-top: 14px;
+  border: 1px solid #dee2e6;
+  background: #f8f9fa;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #495057;
+}

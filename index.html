@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Grade Table</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+<div class="brand">MyAwesomeMvcApp</div>
+
+<nav class="nav">
+<a href="#">Home</a>
+<a href="#">Privacy</a>
+</nav>
+
+<div class="auth">
+<a href="#">Register</a>
+<a href="#">Login</a>
+</div>
+</header>
+
+<div class="container">
+
+<h2>Student Grade Table</h2>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Midterm</th>
+<th>Final</th>
+<th>Letter Grade</th>
+</tr>
+</thead>
+
+<tbody id="students">
+
+<tr>
+<td>1</td>
+<td>John</td>
+<td class="midterm">70</td>
+<td class="final">80</td>
+<td class="letter">-</td>
+</tr>
+
+<tr>
+<td>2</td>
+<td>Ahmed</td>
+<td class="midterm">55</td>
+<td class="final">60</td>
+<td class="letter">-</td>
+</tr>
+
+<tr>
+<td>3</td>
+<td>Mary</td>
+<td class="midterm">90</td>
+<td class="final">95</td>
+<td class="letter">-</td>
+</tr>
+
+</tbody>
+</table>
+
+<button id="showGradesBtn">Show Grades</button>
+
+<div class="info">
+Calculation: 40% Midterm + 60% Final
+</div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
