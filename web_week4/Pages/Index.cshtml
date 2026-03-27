@@ -1,0 +1,180 @@
+﻿@page
+@model MyRazorAuthApp.Pages.IndexModel
+@using System
+
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h3 class="mb-0">Users Table</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Email</th>
+                        <th>Profile Picture</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>@user.Email</td>
+                            <td>
+                                @if (user.ProfilePicture != null)
+                                {
+                                    var base64 = Convert.ToBase64String(user.ProfilePicture);
+                                    var imgSrc = $"data:image/png;base64,{base64}";
+                                    <img src="@imgSrc" width="60" height="60" style="object-fit:cover; border-radius:50%;" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No Photo</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h4 class="mb-0">Gallery Card (JavaScript Preview)</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="file" id="jsImageInput" class="form-control" accept="image/*" />
+                    </div>
+                    <div id="jsPreviewContainer" class="d-flex flex-wrap gap-3"></div>
+                    <p class="text-muted mt-3 mb-0">
+                        This method only previews images in the browser and does not save anything to the database.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h4 class="mb-0">Gallery Card (C# Upload)</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" asp-page-handler="Upload">
+                        <div class="mb-3">
+                            <input asp-for="UploadedImage" type="file" class="form-control" accept="image/*" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload to Database</button>
+                    </form>
+
+                    <hr />
+
+                    <div class="row g-3">
+                        @foreach (var image in Model.Images)
+                        {
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        @if (image.Data != null && image.ContentType != null)
+                                        {
+                                            var base64 = Convert.ToBase64String(image.Data);
+                                            var imgSrc = $"data:@image.ContentType;base64,@base64";
+                                            <img src="@imgSrc" class="img-fluid rounded mb-2" style="max-height:200px; object-fit:cover;" />
+                                        }
+                                        <div><strong>@image.FileName</strong></div>
+                                        <small class="text-muted">@image.ContentType - @image.Size bytes</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h4 class="mb-0">Grade / Notes Card</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>Course:</strong> CENG 382</p>
+                    <p><strong>Status:</strong> Identity, upload, database, and gallery integration are working.</p>
+                    <p class="mb-0"><strong>Note:</strong> This card is here to keep the card layout consistent.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Security Analysis</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Vulnerability: Unrestricted File Upload</h5>
+                    <p>
+                        The application accepts uploaded files from users and stores them in the database. If file validation is not enforced,
+                        attackers may upload unexpected or dangerous content while pretending it is an image.
+                    </p>
+                    <p>
+                        Technically, the risk appears in the upload flow where <code>IFormFile</code> is accepted and converted into binary data
+                        without strict server-side validation of file signature, file size, or allowed content types.
+                    </p>
+                    <p class="mb-0">
+                        If this is not fixed, the consequences may include storage abuse, denial of service, malicious content hosting,
+                        or unsafe files being served back to users.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const jsInput = document.getElementById('jsImageInput');
+        const jsPreviewContainer = document.getElementById('jsPreviewContainer');
+
+        if (jsInput) {
+            jsInput.addEventListener('change', function () {
+                jsPreviewContainer.innerHTML = '';
+
+                const file = this.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'card p-2';
+                    wrapper.style.width = '220px';
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'img-fluid rounded';
+                    img.style.maxHeight = '180px';
+                    img.style.objectFit = 'cover';
+
+                    const text = document.createElement('div');
+                    text.className = 'mt-2 small text-muted';
+                    text.textContent = file.name + ' - Preview only';
+
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(text);
+                    jsPreviewContainer.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
+}
