@@ -1,0 +1,25 @@
+﻿@model List<NorthwindWeb.Models.ShipperContactInfo>
+
+<h2>Shipper Contact Info</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.Email</td>
+            <td>@item.Phone</td>
+            <td>@item.City</td>
+        </tr>
+    }
+    </tbody>
+</table>
