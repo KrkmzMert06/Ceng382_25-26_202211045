@@ -1,14 +1,21 @@
 ﻿@model List<NorthwindWeb.Models.ShipperContactInfo>
 
-<h2>Shipper Contact Info</h2>
+<h2>All Records</h2>
 
-<table class="table table-bordered">
-    <thead>
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
         <tr>
-            <th>ID</th>
+            <th>ContactInfoID</th>
+            <th>ShipperID</th>
             <th>Email</th>
+            <th>Website</th>
             <th>Phone</th>
+            <th>Address</th>
             <th>City</th>
+            <th>Country</th>
+            <th>PostalCode</th>
+            <th>Active</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -16,9 +23,62 @@
     {
         <tr>
             <td>@item.Id</td>
+            <td>@item.ShipperId</td>
             <td>@item.Email</td>
+            <td>@item.Website</td>
             <td>@item.Phone</td>
+            <td>@item.Address</td>
             <td>@item.City</td>
+            <td>@item.Country</td>
+            <td>@item.PostalCode</td>
+            <td>@(item.Active == true ? "Yes" : "No")</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<hr />
+
+<h2>Active Records</h2>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-success">
+        <tr>
+            <th>ContactInfoID</th>
+            <th>ShipperID</th>
+            <th>Email</th>
+            <th>Website</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>City</th>
+            <th>Country</th>
+            <th>PostalCode</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in (List<NorthwindWeb.Models.ShipperContactInfo>)ViewBag.ActiveRecords)
+    {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.ShipperId</td>
+            <td>@item.Email</td>
+            <td>@item.Website</td>
+            <td>@item.Phone</td>
+            <td>@item.Address</td>
+            <td>@item.City</td>
+            <td>@item.Country</td>
+            <td>@item.PostalCode</td>
+            <td>@(item.Active == true ? "Yes" : "No")</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Delete</a>
+            </td>
         </tr>
     }
     </tbody>

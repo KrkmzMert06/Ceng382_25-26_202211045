@@ -446,3 +446,4 @@
 /Users/mertkorkmaz/Desktop/NorthwindWeb/obj/Debug/net10.0/NorthwindWeb.pdb
 /Users/mertkorkmaz/Desktop/NorthwindWeb/obj/Debug/net10.0/NorthwindWeb.genruntimeconfig.cache
 /Users/mertkorkmaz/Desktop/NorthwindWeb/obj/Debug/net10.0/ref/NorthwindWeb.dll
+/Users/mertkorkmaz/Desktop/NorthwindWeb/obj/Debug/net10.0/NorthwindWeb.sourcelink.json
