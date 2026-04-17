@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>CaterFlow</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+
+    <div class="layout">
+
+        <!-- NAVBAR -->
+        <div class="topbar">
+            <span class="brand">🍽 CaterFlow</span>
+        </div>
+
+        <div class="main-wrapper">
+
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                <a href="/">Home</a>
+                <a href="#">Menu</a>
+                <a href="#">Caterers</a>
+                <a href="#">Orders</a>
+                <a href="#">Login</a>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="content">
+                @RenderBody()
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            © 2026 CaterFlow - All Rights Reserved
+        </div>
+
+    </div>
+
+</body>
+</html>
