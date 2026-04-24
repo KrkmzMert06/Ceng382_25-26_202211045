@@ -1,0 +1,114 @@
+@model CaterFlow.Models.ViewModels.MenuCreateViewModel
+@{
+    ViewData["Title"] = "Create Menu Item";
+}
+
+<div class="auth-card wide-card">
+    <h1>Create Menu Item</h1>
+    <p class="muted">Week 2 complete version: image upload, menu data and dynamic customization groups.</p>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data" class="form-grid">
+        <div asp-validation-summary="ModelOnly" class="validation"></div>
+
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name" class="validation"></span>
+
+        <label asp-for="Price"></label>
+        <input asp-for="Price" type="number" step="0.01" min="0.01" />
+        <span asp-validation-for="Price" class="validation"></span>
+
+        <label asp-for="Description"></label>
+        <textarea asp-for="Description" rows="4"></textarea>
+        <span asp-validation-for="Description" class="validation"></span>
+
+        <label asp-for="ImageFile"></label>
+        <input asp-for="ImageFile" type="file" accept="image/*" required />
+        <span asp-validation-for="ImageFile" class="validation"></span>
+        <small class="muted">Required for Week 2. Allowed formats: JPG, PNG, WEBP, GIF. Max size: 5 MB.</small>
+
+        <section class="customization-builder">
+            <h2>Removable Ingredients</h2>
+            <p class="muted">Add ingredients the user can remove, such as onion, tomato or pickles.</p>
+            <div class="builder-row">
+                <input id="removableInput" type="text" placeholder="Example: Onion" />
+                <button type="button" class="secondary-btn" onclick="addRemovableIngredient()">Add</button>
+            </div>
+        </section>
+
+        <label asp-for="RemovableIngredientsText"></label>
+        <textarea asp-for="RemovableIngredientsText" rows="4" placeholder="Tomato&#10;Onion&#10;Pickles"></textarea>
+        <span asp-validation-for="RemovableIngredientsText" class="validation"></span>
+        <small class="muted">One removable ingredient per line. These are stored as boolean-style removable options.</small>
+
+        <section class="customization-builder">
+            <h2>Customization Group Builder</h2>
+            <p class="muted">Use this to quickly add grouped options. Example: group “Sauces” with options “Ketchup” and “Garlic Sauce”.</p>
+            <div class="builder-grid">
+                <div>
+                    <label for="groupNameInput">Group Name</label>
+                    <input id="groupNameInput" type="text" placeholder="Example: Sauces" />
+                </div>
+                <div>
+                    <label for="optionNameInput">Option Name</label>
+                    <input id="optionNameInput" type="text" placeholder="Example: Garlic Sauce" />
+                </div>
+                <div>
+                    <label for="priceModifierInput">Extra Price</label>
+                    <input id="priceModifierInput" type="number" step="0.01" min="0" placeholder="0" />
+                </div>
+            </div>
+            <button type="button" class="secondary-btn" onclick="addCustomizationOption()">Add Group Option</button>
+        </section>
+
+        <label asp-for="CustomizationGroupsText"></label>
+        <textarea asp-for="CustomizationGroupsText" rows="9" placeholder="Group: Sauces&#10;Ketchup|0&#10;Garlic Sauce|5&#10;&#10;Group: Sides&#10;Fries|20&#10;Salad|15"></textarea>
+        <span asp-validation-for="CustomizationGroupsText" class="validation"></span>
+        <small class="muted">Use “Group: name”, then options below it. Optional price modifier format: Option Name|Price.</small>
+
+        <button type="submit" class="primary-btn">Create</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function appendLine(textareaId, line) {
+            const textarea = document.getElementById(textareaId);
+            const current = textarea.value.trimEnd();
+            textarea.value = current ? current + "\n" + line : line;
+            textarea.focus();
+        }
+
+        function addRemovableIngredient() {
+            const input = document.getElementById("removableInput");
+            const value = input.value.trim();
+            if (!value) return;
+            appendLine("RemovableIngredientsText", value);
+            input.value = "";
+        }
+
+        function addCustomizationOption() {
+            const groupInput = document.getElementById("groupNameInput");
+            const optionInput = document.getElementById("optionNameInput");
+            const priceInput = document.getElementById("priceModifierInput");
+            const groupName = groupInput.value.trim();
+            const optionName = optionInput.value.trim();
+            const price = priceInput.value.trim() || "0";
+            if (!groupName || !optionName) return;
+
+            const textarea = document.getElementById("CustomizationGroupsText");
+            const current = textarea.value;
+            const groupHeader = "Group: " + groupName;
+            let nextText = current.trimEnd();
+            if (!current.includes(groupHeader)) {
+                nextText = nextText ? nextText + "\n\n" + groupHeader : groupHeader;
+            }
+            nextText += "\n" + optionName + "|" + price;
+            textarea.value = nextText;
+            optionInput.value = "";
+            priceInput.value = "";
+            optionInput.focus();
+        }
+    </script>
+}

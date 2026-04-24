@@ -1,0 +1,74 @@
+@model IEnumerable<CaterFlow.Models.Entities.MenuItem>
+@{
+    ViewData["Title"] = "My Menu Items";
+}
+
+<div class="page-header">
+    <div>
+        <h1>My Menu Items</h1>
+        <p class="muted">Create, update, delete and manage dynamic customizations for your menu.</p>
+    </div>
+    <a class="primary-btn" asp-controller="Menu" asp-action="Create">+ Add Menu Item</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="success">@TempData["Success"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="empty-state">No menu items have been created yet.</div>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Customization</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            var imageSrc = string.IsNullOrWhiteSpace(item.ImageUrl) ? "/images/no-image.svg" : item.ImageUrl;
+            <tr>
+                <td>
+                    <img src="@imageSrc"
+                         alt="@item.Name"
+                         class="menu-thumb"
+                         onerror="this.onerror=null;this.src='/images/no-image.svg';" />
+                </td>
+                <td>@item.Name</td>
+                <td>@item.Description</td>
+                <td>@item.Price.ToString("C")</td>
+                <td>
+                    @if (item.CustomizationGroups.Any())
+                    {
+                        <span>@item.CustomizationGroups.Count groups / @item.CustomizationGroups.Sum(g => g.Options.Count) options</span>
+                    }
+                    else
+                    {
+                        <span class="muted">No customization</span>
+                    }
+                </td>
+                <td>@(item.IsActive ? "Active" : "Passive")</td>
+                <td>
+                    <div class="table-actions">
+                        <a class="secondary-btn small-btn" asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Delete this menu item?');">
+                            <button type="submit" class="danger-btn small-btn">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

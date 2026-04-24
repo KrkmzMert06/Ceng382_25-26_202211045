@@ -1,0 +1,46 @@
+@model CaterFlow.Models.ViewModels.RegisterViewModel
+@using CaterFlow.Models.Entities
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="auth-card">
+    <h1>Create Account</h1>
+    <p class="muted">Choose a role and join CaterFlow.</p>
+
+    <form asp-action="Register" method="post" class="form-grid">
+        <div asp-validation-summary="ModelOnly" class="validation"></div>
+
+        <label asp-for="FullName"></label>
+        <input asp-for="FullName" />
+        <span asp-validation-for="FullName" class="validation"></span>
+
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email" class="validation"></span>
+
+        <label asp-for="Password"></label>
+        <input asp-for="Password" />
+        <span asp-validation-for="Password" class="validation"></span>
+
+        <label asp-for="ConfirmPassword"></label>
+        <input asp-for="ConfirmPassword" />
+        <span asp-validation-for="ConfirmPassword" class="validation"></span>
+
+        <label asp-for="Role"></label>
+        <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()"></select>
+        <span asp-validation-for="Role" class="validation"></span>
+
+        <label asp-for="BusinessName"></label>
+        <input asp-for="BusinessName" placeholder="Required only for Caterer" />
+        <span asp-validation-for="BusinessName" class="validation"></span>
+
+        <button type="submit" class="primary-btn">Register</button>
+    </form>
+
+    <p class="muted">Already have an account? <a asp-controller="Account" asp-action="Login">Login</a></p>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

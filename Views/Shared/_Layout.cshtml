@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CaterFlow</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="layout">
+        <div class="topbar">
+            <span class="brand">🍽 CaterFlow</span>
+            <div class="user-area">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span>@User.Identity.Name</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="link-button">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login">Login</a>
+                    <a asp-controller="Account" asp-action="Register">Register</a>
+                }
+            </div>
+        </div>
+
+        <div class="main-wrapper">
+            <nav class="sidebar">
+                @if (User.IsInRole("User") || User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Home" asp-action="Index">User Home</a>
+                }
+                @if (User.IsInRole("Caterer"))
+                {
+                    <a asp-controller="Menu" asp-action="MyItems">My Menu</a>
+                    <a asp-controller="Menu" asp-action="Create">Create Menu</a>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Admin" asp-action="Index">Admin</a>
+                }
+                @if (!(User.Identity?.IsAuthenticated ?? false))
+                {
+                    <a asp-controller="Account" asp-action="Login">Login</a>
+                    <a asp-controller="Account" asp-action="Register">Register</a>
+                }
+            </nav>
+
+            <main class="content">
+                @RenderBody()
+            </main>
+        </div>
+
+        <div class="footer">© 2026 CaterFlow - All Rights Reserved</div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

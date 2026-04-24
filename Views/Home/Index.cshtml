@@ -1,0 +1,80 @@
+@model IEnumerable<CaterFlow.Models.ViewModels.HomeMenuItemViewModel>
+@{
+    ViewData["Title"] = "Available Menus";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Available Menus</h1>
+        <p class="muted">Menus created by caterers are visible to users here with images and customization structures.</p>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">No menu items have been created yet.</div>
+}
+else
+{
+    <div class="menu-grid">
+        @foreach (var item in Model)
+        {
+            var imageSrc = string.IsNullOrWhiteSpace(item.ImageUrl) ? "/images/no-image.svg" : item.ImageUrl;
+            <div class="menu-card">
+                <img src="@imageSrc"
+                     alt="@item.Name"
+                     class="menu-image"
+                     onerror="this.onerror=null;this.src='/images/no-image.svg';" />
+                <h3>@item.Name</h3>
+                <p>@item.Description</p>
+                <div class="menu-meta">
+                    <span>Caterer: @item.CatererName</span>
+                    <strong>@item.Price.ToString("C")</strong>
+                </div>
+
+                @if (item.CustomizationGroups.Any())
+                {
+                    <div class="customization-list">
+                        <strong>Customization Options</strong>
+                        @foreach (var group in item.CustomizationGroups)
+                        {
+                            <div class="customization-group">
+                                <span class="group-title">@group.Name</span>
+                                <ul>
+                                    @foreach (var option in group.Options)
+                                    {
+                                        <li>
+                                            @if (option.IsRemovableIngredient)
+                                            {
+                                                <label class="option-row">
+                                                    <input type="checkbox" checked disabled />
+                                                    <span>@option.Name</span>
+                                                    <span class="pill">removable</span>
+                                                </label>
+                                            }
+                                            else
+                                            {
+                                                <label class="option-row">
+                                                    <input type="checkbox" disabled />
+                                                    <span>@option.Name</span>
+                                                    @if (option.PriceModifier != 0)
+                                                    {
+                                                        <span class="price-mod">+@option.PriceModifier.ToString("C")</span>
+                                                    }
+                                                </label>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="customization-list muted">No customization options.</div>
+                }
+            </div>
+        }
+    </div>
+}
