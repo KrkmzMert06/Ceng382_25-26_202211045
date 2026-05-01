@@ -1,0 +1,87 @@
+@model CaterFlow.Models.ViewModels.CartPageViewModel
+@{
+    ViewData["Title"] = "Cart";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Your Cart</h1>
+        <p class="muted">Review quantities, customizations and total price before payment.</p>
+    </div>
+</div>
+
+@if (TempData["CartMessage"] != null)
+{
+    <div class="alert-success">@TempData["CartMessage"]</div>
+}
+
+@if (!Model.Items.Any())
+{
+    <div class="empty-state">Your cart is empty.</div>
+}
+else
+{
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Customizations</th>
+                    <th>Unit</th>
+                    <th>Qty</th>
+                    <th>Line Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.MenuItemName</strong><br />
+                            <span class="muted">@item.CatererName</span>
+                        </td>
+                        <td>
+                            @if (item.SelectedCustomizations.Any())
+                            {
+                                <ul class="compact-list">
+                                    @foreach (var opt in item.SelectedCustomizations)
+                                    {
+                                        var optionText = opt.IsRemovableIngredient ? $"Remove {opt.OptionName}" : opt.OptionName;
+                                        <li>@opt.GroupName: @optionText @if (opt.PriceModifier != 0) { <span>(+@opt.PriceModifier.ToString("C"))</span> }</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <span class="muted">None</span>
+                            }
+                        </td>
+                        <td>@((item.UnitPrice + item.CustomizationTotal).ToString("C"))</td>
+                        <td>
+                            <form asp-action="UpdateQuantity" method="post" class="inline-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                <input type="number" name="quantity" value="@item.Quantity" min="1" max="99" class="qty-input" />
+                                <button type="submit" class="secondary-button">Update</button>
+                            </form>
+                        </td>
+                        <td><strong>@item.LineTotal.ToString("C")</strong></td>
+                        <td>
+                            <form asp-action="Remove" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                <button type="submit" class="danger-button">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="summary-card">
+        <h3>Total: @Model.TotalPrice.ToString("C")</h3>
+        <a asp-action="Checkout" class="primary-link-button">Proceed to Payment</a>
+    </div>
+}

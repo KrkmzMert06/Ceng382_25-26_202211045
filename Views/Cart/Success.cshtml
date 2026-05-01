@@ -1,0 +1,12 @@
+@model CaterFlow.Models.ViewModels.OrderDetailsViewModel
+@{
+    ViewData["Title"] = "Order Completed";
+}
+
+<div class="success-panel">
+    <h1>Payment Successful</h1>
+    <p>Order #@Model.Id was created and stored with status <strong>@Model.Status</strong>.</p>
+    <p>Total: <strong>@Model.TotalPrice.ToString("C")</strong></p>
+    <p>Card: **** **** **** @Model.CardLastFourDigits</p>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="primary-link-button">View Order Details</a>
+</div>

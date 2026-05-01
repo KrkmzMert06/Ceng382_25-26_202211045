@@ -1,0 +1,129 @@
+@model CaterFlow.Models.ViewModels.MenuEditViewModel
+@{
+    ViewData["Title"] = "Edit Menu Item";
+    var existingImage = string.IsNullOrWhiteSpace(Model.ExistingImageUrl) ? "/images/no-image.svg" : Model.ExistingImageUrl;
+}
+
+<div class="auth-card wide-card">
+    <h1>Edit Menu Item</h1>
+    <p class="muted">Update the item, replace the image if needed, and redefine dynamic customizations.</p>
+
+    <form asp-action="Edit" method="post" enctype="multipart/form-data" class="form-grid">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ExistingImageUrl" />
+        <div asp-validation-summary="ModelOnly" class="validation"></div>
+
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name" class="validation"></span>
+
+        <label asp-for="Price"></label>
+        <input asp-for="Price" type="number" step="0.01" min="0.01" />
+        <span asp-validation-for="Price" class="validation"></span>
+
+        <label asp-for="Description"></label>
+        <textarea asp-for="Description" rows="4"></textarea>
+        <span asp-validation-for="Description" class="validation"></span>
+
+        <div>
+            <label>Current Image</label>
+            <img src="@existingImage" alt="@Model.Name" class="menu-thumb large-thumb" onerror="this.onerror=null;this.src='/images/no-image.svg';" />
+        </div>
+
+        <label asp-for="ImageFile"></label>
+        <input asp-for="ImageFile" type="file" accept="image/*" />
+        <span asp-validation-for="ImageFile" class="validation"></span>
+        <small class="muted">Leave empty to keep the current image.</small>
+
+        <label class="checkbox-row">
+            <input asp-for="IsActive" />
+            Active
+        </label>
+
+        <section class="customization-builder">
+            <h2>Removable Ingredients</h2>
+            <p class="muted">Add ingredients the user can remove.</p>
+            <div class="builder-row">
+                <input id="removableInput" type="text" placeholder="Example: Onion" />
+                <button type="button" class="secondary-btn" onclick="addRemovableIngredient()">Add</button>
+            </div>
+        </section>
+
+        <label asp-for="RemovableIngredientsText"></label>
+        <textarea asp-for="RemovableIngredientsText" rows="4"></textarea>
+        <span asp-validation-for="RemovableIngredientsText" class="validation"></span>
+
+        <section class="customization-builder">
+            <h2>Customization Group Builder</h2>
+            <p class="muted">Add grouped options with optional extra prices.</p>
+            <div class="builder-grid">
+                <div>
+                    <label for="groupNameInput">Group Name</label>
+                    <input id="groupNameInput" type="text" placeholder="Example: Sauces" />
+                </div>
+                <div>
+                    <label for="optionNameInput">Option Name</label>
+                    <input id="optionNameInput" type="text" placeholder="Example: Garlic Sauce" />
+                </div>
+                <div>
+                    <label for="priceModifierInput">Extra Price</label>
+                    <input id="priceModifierInput" type="number" step="0.01" min="0" placeholder="0" />
+                </div>
+            </div>
+            <button type="button" class="secondary-btn" onclick="addCustomizationOption()">Add Group Option</button>
+        </section>
+
+        <label asp-for="CustomizationGroupsText"></label>
+        <textarea asp-for="CustomizationGroupsText" rows="9"></textarea>
+        <span asp-validation-for="CustomizationGroupsText" class="validation"></span>
+        <small class="muted">Editing this text rebuilds the item customization groups in the database.</small>
+
+        <div class="button-row">
+            <button type="submit" class="primary-btn">Save Changes</button>
+            <a class="secondary-btn" asp-action="MyItems">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function appendLine(textareaId, line) {
+            const textarea = document.getElementById(textareaId);
+            const current = textarea.value.trimEnd();
+            textarea.value = current ? current + "\n" + line : line;
+            textarea.focus();
+        }
+
+        function addRemovableIngredient() {
+            const input = document.getElementById("removableInput");
+            const value = input.value.trim();
+            if (!value) return;
+            appendLine("RemovableIngredientsText", value);
+            input.value = "";
+        }
+
+        function addCustomizationOption() {
+            const groupInput = document.getElementById("groupNameInput");
+            const optionInput = document.getElementById("optionNameInput");
+            const priceInput = document.getElementById("priceModifierInput");
+            const groupName = groupInput.value.trim();
+            const optionName = optionInput.value.trim();
+            const price = priceInput.value.trim() || "0";
+            if (!groupName || !optionName) return;
+
+            const textarea = document.getElementById("CustomizationGroupsText");
+            const current = textarea.value;
+            const groupHeader = "Group: " + groupName;
+            let nextText = current.trimEnd();
+            if (!current.includes(groupHeader)) {
+                nextText = nextText ? nextText + "\n\n" + groupHeader : groupHeader;
+            }
+            nextText += "\n" + optionName + "|" + price;
+            textarea.value = nextText;
+            optionInput.value = "";
+            priceInput.value = "";
+            optionInput.focus();
+        }
+    </script>
+}

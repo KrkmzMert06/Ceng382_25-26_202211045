@@ -1,0 +1,31 @@
+@model IEnumerable<CaterFlow.Models.ViewModels.OrderHistoryItemViewModel>
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<div class="page-header"><h1>My Orders</h1></div>
+@if (!Model.Any())
+{
+    <div class="empty-state">No orders yet.</div>
+}
+else
+{
+    <div class="table-card">
+        <table class="data-table">
+            <thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Items</th><th>Total</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@order.Status</td>
+                    <td>@order.ItemCount</td>
+                    <td>@order.TotalPrice.ToString("C")</td>
+                    <td><a asp-action="Details" asp-route-id="@order.Id">Details</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

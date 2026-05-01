@@ -1,0 +1,65 @@
+@model CaterFlow.Models.ViewModels.PaymentViewModel
+@{
+    ViewData["Title"] = "Payment";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Payment Simulation</h1>
+        <p class="muted">Enter test card information. No real payment provider is used.</p>
+    </div>
+</div>
+
+<div class="two-column">
+    <div class="table-card">
+        <h3>Order Summary</h3>
+        @foreach (var item in Model.Cart.Items)
+        {
+            <div class="summary-line">
+                <div>
+                    <strong>@item.MenuItemName</strong> x @item.Quantity
+                    @if (item.SelectedCustomizations.Any())
+                    {
+                        <ul class="compact-list">
+                            @foreach (var opt in item.SelectedCustomizations)
+                            {
+                                var optionText = opt.IsRemovableIngredient ? $"Remove {opt.OptionName}" : opt.OptionName;
+                                <li>@opt.GroupName: @optionText @if (opt.PriceModifier != 0) { <span>(+@opt.PriceModifier.ToString("C"))</span> }</li>
+                            }
+                        </ul>
+                    }
+                </div>
+                <strong>@item.LineTotal.ToString("C")</strong>
+            </div>
+        }
+        <hr />
+        <h3>Total: @Model.Cart.TotalPrice.ToString("C")</h3>
+    </div>
+
+    <form asp-action="Checkout" method="post" class="form-card">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+        <label asp-for="CardHolderName"></label>
+        <input asp-for="CardHolderName" />
+        <span asp-validation-for="CardHolderName" class="field-validation"></span>
+
+        <label asp-for="CardNumber"></label>
+        <input asp-for="CardNumber" maxlength="19" placeholder="4242 4242 4242 4242" />
+        <span asp-validation-for="CardNumber" class="field-validation"></span>
+
+        <label asp-for="ExpirationDate"></label>
+        <input asp-for="ExpirationDate" placeholder="12/30" />
+        <span asp-validation-for="ExpirationDate" class="field-validation"></span>
+
+        <label asp-for="Cvv"></label>
+        <input asp-for="Cvv" maxlength="4" />
+        <span asp-validation-for="Cvv" class="field-validation"></span>
+
+        <button type="submit" class="primary-button">Simulate Payment</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

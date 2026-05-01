@@ -1,0 +1,36 @@
+@model CaterFlow.Models.ViewModels.OrderDetailsViewModel
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Order #@Model.Id</h1>
+        <p class="muted">Status: @Model.Status | Created: @Model.CreatedAt.ToLocalTime().ToString("g")</p>
+    </div>
+</div>
+
+<div class="table-card">
+    @foreach (var item in Model.Items)
+    {
+        <div class="summary-line">
+            <div>
+                <strong>@item.MenuItemName</strong> x @item.Quantity<br />
+                <span class="muted">Base: @item.UnitPrice.ToString("C") | Customizations: @item.CustomizationTotal.ToString("C")</span>
+                @if (item.SelectedCustomizations.Any())
+                {
+                    <ul class="compact-list">
+                    @foreach (var opt in item.SelectedCustomizations)
+                    {
+                        var optionText = opt.IsRemovableIngredient ? $"Remove {opt.OptionName}" : opt.OptionName;
+                        <li>@opt.GroupName: @optionText @if (opt.PriceModifier != 0) { <span>(+@opt.PriceModifier.ToString("C"))</span> }</li>
+                    }
+                    </ul>
+                }
+            </div>
+            <strong>@item.LineTotal.ToString("C")</strong>
+        </div>
+    }
+    <hr />
+    <h3>Total: @Model.TotalPrice.ToString("C")</h3>
+</div>

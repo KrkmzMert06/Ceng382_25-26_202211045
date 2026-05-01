@@ -1,0 +1,21 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h1>Admin Dashboard</h1>
+<p class="muted">Basic admin page for Week 2.</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span>Users</span>
+        <strong>@ViewBag.UserCount</strong>
+    </div>
+    <div class="stat-card">
+        <span>Caterers</span>
+        <strong>@ViewBag.CatererCount</strong>
+    </div>
+    <div class="stat-card">
+        <span>Menu Items</span>
+        <strong>@ViewBag.MenuCount</strong>
+    </div>
+</div>
