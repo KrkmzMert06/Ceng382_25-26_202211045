@@ -1,6 +1,11 @@
-@model IEnumerable<CaterFlow.Models.ViewModels.HomeMenuItemViewModel>
+@model IEnumerable<CaterFlow.Models.ViewModels.NearbyMenuItemViewModel>
 @{
     ViewData["Title"] = "Available Menus";
+    var hasLocation = (bool)(ViewBag.HasLocation ?? false);
+    var userLat = ViewBag.UserLat as double?;
+    var userLng = ViewBag.UserLng as double?;
+    var maxDist = (double)(ViewBag.MaxDistance ?? 50);
+    var apiKey = ViewContext.HttpContext.RequestServices.GetRequiredService<IConfiguration>()["GoogleMaps:ApiKey"] ?? "";
 }
 
 <div class="page-header">
@@ -15,9 +20,72 @@
     <div class="alert-success">@TempData["CartMessage"]</div>
 }
 
+<!-- Location Filter -->
+<div class="location-filter-card">
+    <div class="location-filter-header">
+        <strong>📍 Location-Based Filtering</strong>
+        @if (hasLocation)
+        {
+            <span class="badge badge-green">Location Active</span>
+        }
+        else
+        {
+            <span class="badge badge-gray">No Location Set</span>
+        }
+    </div>
+    <div class="location-filter-body">
+        <form method="get" asp-action="Index" class="location-form">
+            <input type="hidden" id="filterLat" name="lat" value="@(userLat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+            <input type="hidden" id="filterLng" name="lng" value="@(userLng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+            <div class="location-form-row">
+                <button type="button" id="btnDetectLocation" class="secondary-button" onclick="detectLocation()">
+                    📍 Detect My Location
+                </button>
+                <label class="distance-label">
+                    Max Distance:
+                    @{
+                        var distances = new[] { 5.0, 10.0, 25.0, 50.0, 100.0, 500.0 };
+                    }
+                    <select name="maxDistance" class="distance-select" id="distanceSelect">
+                        @foreach (var d in distances)
+                        {
+                            if (maxDist == d)
+                            {
+                                <option value="@d" selected="selected">@d km</option>
+                            }
+                            else
+                            {
+                                <option value="@d">@d km</option>
+                            }
+                        }
+                    </select>
+                </label>
+                <button type="submit" class="primary-button">Filter</button>
+                <a asp-action="Index" class="secondary-button">Show All</a>
+            </div>
+            <p id="locationStatus" class="muted" style="margin-top:8px;">
+                @if (hasLocation)
+                {
+                    <text>Showing restaurants within @maxDist km of your location.</text>
+                }
+                else
+                {
+                    <text>Click "Detect My Location" or set your location in settings to filter by distance.</text>
+                }
+            </p>
+        </form>
+    </div>
+</div>
+
+@if (hasLocation && !string.IsNullOrWhiteSpace(apiKey))
+{
+    <!-- Google Map -->
+    <div id="map" class="google-map"></div>
+}
+
 @if (!Model.Any())
 {
-    <div class="empty-state">No menu items have been created yet.</div>
+    <div class="empty-state">No menu items found in this area. Try increasing your distance filter or click "Show All".</div>
 }
 else
 {
@@ -32,6 +100,20 @@ else
                 <div class="menu-meta">
                     <span>Caterer: @item.CatererName</span>
                     <strong>@item.Price.ToString("C")</strong>
+                </div>
+                <div class="menu-meta-extra">
+                    @if (item.AverageRating > 0)
+                    {
+                        <span class="rating-badge">⭐ @item.AverageRating.ToString("F1")</span>
+                    }
+                    else
+                    {
+                        <span class="rating-badge muted">No ratings yet</span>
+                    }
+                    @if (hasLocation && item.DistanceKm > 0)
+                    {
+                        <span class="distance-badge">📍 @item.DistanceKm.ToString("F1") km</span>
+                    }
                 </div>
 
                 <form asp-controller="Cart" asp-action="Add" method="post" class="cart-form">
@@ -100,4 +182,57 @@ else
             </div>
         }
     </div>
+}
+
+@section Scripts {
+    <script>
+        function detectLocation() {
+            var status = document.getElementById('locationStatus');
+            if (!navigator.geolocation) {
+                status.textContent = 'Geolocation is not supported by your browser.';
+                return;
+            }
+            status.textContent = 'Detecting your location...';
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    document.getElementById('filterLat').value = position.coords.latitude;
+                    document.getElementById('filterLng').value = position.coords.longitude;
+                    status.textContent = 'Location detected! Click "Filter" to apply.';
+                },
+                function(error) {
+                    status.textContent = 'Unable to detect location. Please set it manually in settings.';
+                }
+            );
+        }
+    </script>
+    @if (hasLocation && !string.IsNullOrWhiteSpace(apiKey))
+    {
+        <script>
+            function initMap() {
+                var userLat = @(userLat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0");
+                var userLng = @(userLng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0");
+                var map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: userLat, lng: userLng },
+                    zoom: 12
+                });
+                new google.maps.Marker({
+                    position: { lat: userLat, lng: userLng },
+                    map: map,
+                    title: 'Your Location',
+                    icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                });
+                @foreach (var item in Model.Where(i => i.CatererLat != 0 && i.CatererLng != 0).DistinctBy(i => i.CatererProfileId))
+                {
+                    <text>
+                    new google.maps.Marker({
+                        position: { lat: @item.CatererLat.ToString(System.Globalization.CultureInfo.InvariantCulture), lng: @item.CatererLng.ToString(System.Globalization.CultureInfo.InvariantCulture) },
+                        map: map,
+                        title: '@Html.Raw(item.CatererName.Replace("'", "\\'"))'
+                    });
+                    </text>
+                }
+            }
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=@apiKey&callback=initMap" async defer></script>
+    }
 }

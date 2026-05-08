@@ -1,0 +1,134 @@
+@{
+    ViewData["Title"] = "Update Location";
+    var currentLat = ViewBag.CurrentLat as double?;
+    var currentLng = ViewBag.CurrentLng as double?;
+    var currentAddress = ViewBag.CurrentAddress as string;
+    var apiKey = ViewContext.HttpContext.RequestServices.GetRequiredService<IConfiguration>()["GoogleMaps:ApiKey"] ?? "";
+}
+
+<div class="page-header">
+    <div>
+        <h1>📍 Update Your Location</h1>
+        <p class="muted">Set your location so we can show you nearby caterers and calculate delivery distances.</p>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert-success">@TempData["Success"]</div>
+}
+
+<div class="form-card" style="max-width:600px;">
+    <form asp-action="UpdateLocation" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="form-grid">
+            <div>
+                <label><strong>Current Location:</strong></label>
+                @if (currentLat.HasValue && currentLng.HasValue)
+                {
+                    <p>Lat: @currentLat.Value.ToString("F6"), Lng: @currentLng.Value.ToString("F6")</p>
+                    @if (!string.IsNullOrWhiteSpace(currentAddress))
+                    {
+                        <p class="muted">@currentAddress</p>
+                    }
+                }
+                else
+                {
+                    <p class="muted">No location set yet.</p>
+                }
+            </div>
+
+            <div>
+                <label for="latitude">Latitude</label>
+                <input type="number" id="latitude" name="latitude" step="0.000001" required
+                       value="@(currentLat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                       placeholder="e.g. 39.9208" />
+            </div>
+
+            <div>
+                <label for="longitude">Longitude</label>
+                <input type="number" id="longitude" name="longitude" step="0.000001" required
+                       value="@(currentLng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                       placeholder="e.g. 32.8541" />
+            </div>
+
+            <div>
+                <label for="address">Address (optional)</label>
+                <input type="text" id="address" name="address"
+                       value="@(currentAddress ?? "")"
+                       placeholder="Enter your address..." />
+            </div>
+
+            <div class="button-row">
+                <button type="button" class="secondary-button" onclick="detectMyLocation()">
+                    📍 Auto-detect Location
+                </button>
+                <button type="submit" class="primary-button">Save Location</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(apiKey))
+{
+    <div id="locationMap" class="google-map" style="margin-top:20px;"></div>
+}
+
+@section Scripts {
+    <script>
+        function detectMyLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                    if (typeof updateMap === 'function') {
+                        updateMap(position.coords.latitude, position.coords.longitude);
+                    }
+                },
+                function(error) {
+                    alert('Unable to detect location: ' + error.message);
+                }
+            );
+        }
+    </script>
+    @if (!string.IsNullOrWhiteSpace(apiKey))
+    {
+        <script>
+            var map, marker;
+            function initMap() {
+                var lat = parseFloat(document.getElementById('latitude').value) || 39.9208;
+                var lng = parseFloat(document.getElementById('longitude').value) || 32.8541;
+                map = new google.maps.Map(document.getElementById('locationMap'), {
+                    center: { lat: lat, lng: lng },
+                    zoom: 14
+                });
+                marker = new google.maps.Marker({
+                    position: { lat: lat, lng: lng },
+                    map: map,
+                    draggable: true,
+                    title: 'Your Location'
+                });
+                marker.addListener('dragend', function(e) {
+                    document.getElementById('latitude').value = e.latLng.lat().toFixed(6);
+                    document.getElementById('longitude').value = e.latLng.lng().toFixed(6);
+                });
+                map.addListener('click', function(e) {
+                    marker.setPosition(e.latLng);
+                    document.getElementById('latitude').value = e.latLng.lat().toFixed(6);
+                    document.getElementById('longitude').value = e.latLng.lng().toFixed(6);
+                });
+            }
+            function updateMap(lat, lng) {
+                var pos = { lat: lat, lng: lng };
+                map.setCenter(pos);
+                marker.setPosition(pos);
+            }
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=@apiKey&callback=initMap" async defer></script>
+    }
+}

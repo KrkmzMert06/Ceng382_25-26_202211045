@@ -1,0 +1,133 @@
+@model CaterFlow.Models.ViewModels.RateOrderViewModel
+@{
+    ViewData["Title"] = "Rate Order #" + Model.OrderId;
+}
+
+<div class="page-header">
+    <div>
+        <h1>⭐ Rate Order #@Model.OrderId</h1>
+        <p class="muted">Share your experience to help others find great food!</p>
+    </div>
+</div>
+
+<form asp-action="Rate" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="OrderId" value="@Model.OrderId" />
+
+    <div class="rating-section">
+        <h2>Menu Items</h2>
+        @for (int i = 0; i < Model.MenuItems.Count; i++)
+        {
+            var item = Model.MenuItems[i];
+            <div class="rating-card">
+                <div class="rating-card-header">
+                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                    {
+                        <img src="@item.ImageUrl" alt="@item.MenuItemName" class="rating-thumb" onerror="this.onerror=null;this.src='/images/no-image.svg';" />
+                    }
+                    <div>
+                        <strong>@item.MenuItemName</strong>
+                        @if (item.AlreadyRated)
+                        {
+                            <span class="badge badge-green">Already Rated</span>
+                        }
+                    </div>
+                </div>
+
+                <input type="hidden" name="MenuItems[@i].MenuItemId" value="@item.MenuItemId" />
+                <input type="hidden" name="MenuItems[@i].MenuItemName" value="@item.MenuItemName" />
+                <input type="hidden" name="MenuItems[@i].ImageUrl" value="@item.ImageUrl" />
+                <input type="hidden" name="MenuItems[@i].AlreadyRated" value="@item.AlreadyRated.ToString().ToLower()" />
+
+                @if (item.AlreadyRated)
+                {
+                    <input type="hidden" name="MenuItems[@i].Score" value="@item.ExistingScore" />
+                    <div class="existing-rating">
+                        <span>Your rating: <strong>@item.ExistingScore / 5 ⭐</strong></span>
+                        @if (!string.IsNullOrWhiteSpace(item.ExistingComment))
+                        {
+                            <p class="muted">"@item.ExistingComment"</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="star-rating-group">
+                        <label>Rating:</label>
+                        <div class="star-input" data-target="MenuItems[@i].Score">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                <label class="star-label">
+                                    <input type="radio" name="MenuItems[@i].Score" value="@s" @(item.Score == s ? "checked" : "") />
+                                    <span class="star">★</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                    <div class="comment-group">
+                        <label>Comment (optional):</label>
+                        <textarea name="MenuItems[@i].Comment" rows="2" maxlength="500" placeholder="Share your thoughts...">@item.Comment</textarea>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    @if (Model.Caterer != null)
+    {
+        <div class="rating-section">
+            <h2>Caterer</h2>
+            <div class="rating-card">
+                <div class="rating-card-header">
+                    <div>
+                        <strong>🍳 @Model.Caterer.CatererName</strong>
+                        @if (Model.Caterer.AlreadyRated)
+                        {
+                            <span class="badge badge-green">Already Rated</span>
+                        }
+                    </div>
+                </div>
+
+                <input type="hidden" name="Caterer.CatererProfileId" value="@Model.Caterer.CatererProfileId" />
+                <input type="hidden" name="Caterer.CatererName" value="@Model.Caterer.CatererName" />
+                <input type="hidden" name="Caterer.AlreadyRated" value="@Model.Caterer.AlreadyRated.ToString().ToLower()" />
+
+                @if (Model.Caterer.AlreadyRated)
+                {
+                    <input type="hidden" name="Caterer.Score" value="@Model.Caterer.ExistingScore" />
+                    <div class="existing-rating">
+                        <span>Your rating: <strong>@Model.Caterer.ExistingScore / 5 ⭐</strong></span>
+                        @if (!string.IsNullOrWhiteSpace(Model.Caterer.ExistingComment))
+                        {
+                            <p class="muted">"@Model.Caterer.ExistingComment"</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="star-rating-group">
+                        <label>Rating:</label>
+                        <div class="star-input">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                <label class="star-label">
+                                    <input type="radio" name="Caterer.Score" value="@s" @(Model.Caterer.Score == s ? "checked" : "") />
+                                    <span class="star">★</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                    <div class="comment-group">
+                        <label>Comment (optional):</label>
+                        <textarea name="Caterer.Comment" rows="2" maxlength="500" placeholder="How was the service?">@Model.Caterer.Comment</textarea>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="button-row" style="margin-top:20px;">
+        <button type="submit" class="primary-button">Submit Ratings</button>
+        <a asp-controller="Cart" asp-action="Details" asp-route-id="@Model.OrderId" class="secondary-button">Back to Order</a>
+    </div>
+</form>

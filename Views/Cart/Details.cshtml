@@ -8,7 +8,23 @@
         <h1>Order #@Model.Id</h1>
         <p class="muted">Status: @Model.Status | Created: @Model.CreatedAt.ToLocalTime().ToString("g")</p>
     </div>
+    <div class="button-row">
+        @if (Model.Status == "Completed" && !Model.HasBeenRated)
+        {
+            <a asp-controller="Rating" asp-action="Rate" asp-route-orderId="@Model.Id" class="primary-button">⭐ Rate This Order</a>
+        }
+        else if (Model.HasBeenRated)
+        {
+            <span class="badge badge-green">✓ Rated</span>
+        }
+        <a asp-action="Orders" class="secondary-button">← Back to Orders</a>
+    </div>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert-success">@TempData["Success"]</div>
+}
 
 <div class="table-card">
     @foreach (var item in Model.Items)

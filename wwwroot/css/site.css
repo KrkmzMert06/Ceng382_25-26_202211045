@@ -325,8 +325,6 @@ input, select, textarea {
 .secondary-button { background: #f1f1f1; color: #222; }
 .danger-button { background: #ffe5e5; color: #9a1b1b; }
 .table-card, .form-card, .summary-card, .success-panel { background: #fff; border: 1px solid #e8e8e8; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.04); }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; vertical-align: top; }
 .inline-form { display: flex; gap: 8px; align-items: center; }
 .compact-list { margin: 6px 0 0; padding-left: 18px; }
 .summary-card { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; }
@@ -337,3 +335,299 @@ input, select, textarea {
 .validation-summary, .field-validation { color: #a51c1c; font-size: .9rem; }
 .success-panel { text-align: center; max-width: 680px; margin: 40px auto; }
 @media (max-width: 900px) { .two-column { grid-template-columns: 1fr; } .data-table { font-size: .9rem; } }
+
+/* ══════════════════════════════════════
+   Week 4: Location, Rating, Logging UI
+   ══════════════════════════════════════ */
+
+/* ── Location Filter ── */
+.location-filter-card {
+    border: 1px solid #e0ddd8;
+    border-radius: 14px;
+    background: #fffaf4;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.location-filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: #f5f0e8;
+    border-bottom: 1px solid #e0ddd8;
+}
+
+.location-filter-body {
+    padding: 16px 18px;
+}
+
+.location-form-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.distance-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.distance-select {
+    width: auto;
+    min-width: 90px;
+}
+
+.google-map {
+    width: 100%;
+    height: 340px;
+    border-radius: 14px;
+    border: 1px solid #e0ddd8;
+    margin-bottom: 20px;
+    background: #f1ede6;
+}
+
+/* ── Menu Card Extras ── */
+.menu-meta-extra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.rating-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.distance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ── Badges ── */
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.badge-green {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-gray {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* ── Rating Page ── */
+.rating-section {
+    margin-bottom: 28px;
+}
+
+.rating-section h2 {
+    font-size: 20px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f0ebe4;
+}
+
+.rating-card {
+    border: 1px solid #e8e4dc;
+    border-radius: 14px;
+    padding: 18px;
+    background: #fffaf4;
+    margin-bottom: 14px;
+}
+
+.rating-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.rating-thumb {
+    width: 64px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #eee;
+}
+
+.existing-rating {
+    padding: 10px 14px;
+    background: #ecfdf5;
+    border-radius: 10px;
+    margin-top: 8px;
+}
+
+.star-rating-group {
+    margin-top: 8px;
+}
+
+.star-rating-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.star-input {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.star-label {
+    cursor: pointer;
+}
+
+.star-label input[type="radio"] {
+    display: none;
+}
+
+.star-label .star {
+    font-size: 28px;
+    color: #d1d5db;
+    transition: color 0.15s;
+}
+
+.star-label input[type="radio"]:checked ~ .star,
+.star-label:hover .star {
+    color: #f59e0b;
+}
+
+/* Make all preceding stars also highlighted */
+.star-input:has(.star-label input:checked) .star-label .star {
+    color: #f59e0b;
+}
+
+.star-input .star-label:has(~ .star-label input:checked) .star {
+    color: #f59e0b;
+}
+
+.comment-group {
+    margin-top: 10px;
+}
+
+.comment-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.comment-group textarea {
+    resize: vertical;
+    min-height: 50px;
+}
+
+/* ── Log Viewer ── */
+.log-filter-card {
+    border: 1px solid #e0ddd8;
+    border-radius: 14px;
+    background: #fffaf4;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+}
+
+.log-filter-form {
+    width: 100%;
+}
+
+.log-filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr auto;
+    gap: 12px;
+    align-items: end;
+}
+
+@media (max-width: 760px) {
+    .log-filter-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.log-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.log-level-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.log-level-info { background: #dbeafe; color: #1e40af; }
+.log-level-warning { background: #fef3c7; color: #92400e; }
+.log-level-error { background: #fee2e2; color: #991b1b; }
+
+.log-details {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+tr.log-error { background: #fff5f5; }
+tr.log-warning { background: #fffdf5; }
+
+/* ── Pagination ── */
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 18px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.page-link {
+    display: inline-block;
+    padding: 8px 12px;
+    border: 1px solid #e0ddd8;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #4b3322;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.15s;
+}
+
+.page-link:hover {
+    background: #f5f0e8;
+}
+
+.page-link.active {
+    background: #8b5e3c;
+    color: white;
+    border-color: #8b5e3c;
+}

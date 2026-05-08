@@ -2,20 +2,36 @@
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<h1>Admin Dashboard</h1>
-<p class="muted">Basic admin page for Week 2.</p>
+<h1>📊 Admin Dashboard</h1>
+<p class="muted">System overview and management.</p>
 
 <div class="stats-grid">
     <div class="stat-card">
-        <span>Users</span>
+        <span>👥 Users</span>
         <strong>@ViewBag.UserCount</strong>
     </div>
     <div class="stat-card">
-        <span>Caterers</span>
+        <span>🍳 Caterers</span>
         <strong>@ViewBag.CatererCount</strong>
     </div>
     <div class="stat-card">
-        <span>Menu Items</span>
+        <span>🍽️ Menu Items</span>
         <strong>@ViewBag.MenuCount</strong>
     </div>
+    <div class="stat-card">
+        <span>📦 Orders</span>
+        <strong>@ViewBag.OrderCount</strong>
+    </div>
+    <div class="stat-card">
+        <span>⭐ Ratings</span>
+        <strong>@ViewBag.RatingCount</strong>
+    </div>
+    <div class="stat-card">
+        <span>📝 Log Entries</span>
+        <strong>@ViewBag.LogCount</strong>
+    </div>
+</div>
+
+<div style="margin-top:24px;">
+    <a asp-action="Logs" class="primary-button">📝 View System Logs</a>
 </div>

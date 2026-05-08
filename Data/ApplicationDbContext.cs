@@ -18,6 +18,8 @@ namespace CaterFlow.Data
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<OrderItemCustomizationSelection> OrderItemCustomizationSelections => Set<OrderItemCustomizationSelection>();
+        public DbSet<Rating> Ratings => Set<Rating>();
+        public DbSet<SystemLog> SystemLogs => Set<SystemLog>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -108,6 +110,38 @@ namespace CaterFlow.Data
             modelBuilder.Entity<OrderItemCustomizationSelection>()
                 .Property(s => s.PriceModifier)
                 .HasColumnType("decimal(18,2)");
+
+            // ── Week 4: Rating ──
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.Order)
+                .WithMany()
+                .HasForeignKey(r => r.OrderId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.AppUser)
+                .WithMany()
+                .HasForeignKey(r => r.AppUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.MenuItem)
+                .WithMany()
+                .HasForeignKey(r => r.MenuItemId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.CatererProfile)
+                .WithMany()
+                .HasForeignKey(r => r.CatererProfileId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // ── Week 4: SystemLog (no FKs needed, flat table) ──
+            modelBuilder.Entity<SystemLog>()
+                .HasIndex(l => l.CreatedAt);
+
+            modelBuilder.Entity<SystemLog>()
+                .HasIndex(l => l.EventType);
         }
     }
 }

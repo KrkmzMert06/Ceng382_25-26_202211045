@@ -9,16 +9,17 @@
 <body>
     <div class="layout">
         <div class="topbar">
-            <span class="brand">CaterFlow</span>
+            <span class="brand">🍽️ CaterFlow</span>
             <div class="user-area">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <span>@User.Identity.Name</span>
                     @if (User.IsInRole("User"))
                     {
-                        <a asp-controller="Cart" asp-action="Index">Cart</a>
+                        <a asp-controller="Cart" asp-action="Index">🛒 Cart</a>
                         <a asp-controller="Cart" asp-action="Orders">My Orders</a>
                     }
+                    <a asp-controller="Account" asp-action="UpdateLocation" title="Update Location">📍</a>
                     <form asp-controller="Account" asp-action="Logout" method="post">
                         <button type="submit" class="link-button">Logout</button>
                     </form>
@@ -34,18 +35,21 @@
             <nav class="sidebar">
                 @if (User.IsInRole("User"))
                 {
-                    <a asp-controller="Home" asp-action="Index">User Home</a>
-                    <a asp-controller="Cart" asp-action="Index">Cart</a>
-                    <a asp-controller="Cart" asp-action="Orders">My Orders</a>
+                    <a asp-controller="Home" asp-action="Index">🏠 Browse Menus</a>
+                    <a asp-controller="Cart" asp-action="Index">🛒 Cart</a>
+                    <a asp-controller="Cart" asp-action="Orders">📋 My Orders</a>
+                    <a asp-controller="Account" asp-action="UpdateLocation">📍 My Location</a>
                 }
                 @if (User.IsInRole("Caterer"))
                 {
-                    <a asp-controller="Menu" asp-action="MyItems">My Menu</a>
-                    <a asp-controller="Menu" asp-action="Create">Create Menu</a>
+                    <a asp-controller="Menu" asp-action="MyItems">📋 My Menu</a>
+                    <a asp-controller="Menu" asp-action="Create">➕ Create Menu</a>
+                    <a asp-controller="Account" asp-action="UpdateLocation">📍 My Location</a>
                 }
                 @if (User.IsInRole("Admin"))
                 {
-                    <a asp-controller="Admin" asp-action="Index">Admin</a>
+                    <a asp-controller="Admin" asp-action="Index">📊 Dashboard</a>
+                    <a asp-controller="Admin" asp-action="Logs">📝 System Logs</a>
                 }
                 @if (!(User.Identity?.IsAuthenticated ?? false))
                 {

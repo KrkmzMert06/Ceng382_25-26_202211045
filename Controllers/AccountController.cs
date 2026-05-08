@@ -15,11 +15,13 @@ namespace CaterFlow.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly PasswordService _passwordService;
+        private readonly LoggingService _loggingService;
 
-        public AccountController(ApplicationDbContext context, PasswordService passwordService)
+        public AccountController(ApplicationDbContext context, PasswordService passwordService, LoggingService loggingService)
         {
             _context = context;
             _passwordService = passwordService;
+            _loggingService = loggingService;
         }
 
         [HttpGet]
@@ -66,6 +68,10 @@ namespace CaterFlow.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            await _loggingService.LogAuthAsync("Register", user.Id, user.Email,
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
+                $"New {user.Role} registered: {user.FullName}");
+
             await SignInAsync(user);
             return RedirectByRole(user.Role);
         }
@@ -90,8 +96,17 @@ namespace CaterFlow.Controllers
             if (user == null || !_passwordService.VerifyPassword(model.Password, user.PasswordHash))
             {
                 ModelState.AddModelError(string.Empty, "Invalid email or password.");
+
+                await _loggingService.LogAuthAsync("LoginFailed", null, model.Email.Trim(),
+                    HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    "Invalid credentials attempt");
+
                 return View(model);
             }
+
+            await _loggingService.LogAuthAsync("Login", user.Id, user.Email,
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
+                $"User logged in: {user.FullName}");
 
             await SignInAsync(user);
             return RedirectByRole(user.Role);
@@ -102,8 +117,61 @@ namespace CaterFlow.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var email = User.FindFirstValue(ClaimTypes.Email);
+
+            await _loggingService.LogAuthAsync("Logout",
+                int.TryParse(userId, out var uid) ? uid : null,
+                email,
+                HttpContext.Connection.RemoteIpAddress?.ToString());
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Account");
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> UpdateLocation()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.AppUsers.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            ViewBag.CurrentLat = user.Latitude;
+            ViewBag.CurrentLng = user.Longitude;
+            ViewBag.CurrentAddress = user.Address;
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateLocation(double latitude, double longitude, string? address)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.AppUsers.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            user.Latitude = latitude;
+            user.Longitude = longitude;
+            user.Address = address?.Trim();
+            await _context.SaveChangesAsync();
+
+            // If caterer, also update caterer profile location
+            if (user.Role == UserRole.Caterer)
+            {
+                var catererProfile = await _context.CatererProfiles.FirstOrDefaultAsync(c => c.AppUserId == userId);
+                if (catererProfile != null)
+                {
+                    catererProfile.Latitude = latitude;
+                    catererProfile.Longitude = longitude;
+                    catererProfile.Address = address?.Trim();
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            TempData["Success"] = "Location updated successfully.";
+            return RedirectByRole();
         }
 
         private async Task SignInAsync(AppUser user)

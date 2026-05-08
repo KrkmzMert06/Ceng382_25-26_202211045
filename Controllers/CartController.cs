@@ -3,6 +3,7 @@ using System.Text.Json;
 using CaterFlow.Data;
 using CaterFlow.Models.Entities;
 using CaterFlow.Models.ViewModels;
+using CaterFlow.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,14 @@ namespace CaterFlow.Controllers
     {
         private const string CartSessionKey = "CaterFlowCart";
         private readonly ApplicationDbContext _context;
+        private readonly LoggingService _loggingService;
+        private readonly EmailService _emailService;
 
-        public CartController(ApplicationDbContext context)
+        public CartController(ApplicationDbContext context, LoggingService loggingService, EmailService emailService)
         {
             _context = context;
+            _loggingService = loggingService;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -139,6 +144,9 @@ namespace CaterFlow.Controllers
             if (!int.TryParse(userIdValue, out var userId))
                 return Unauthorized();
 
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var userName = User.FindFirstValue(ClaimTypes.Name);
+
             var order = new Order
             {
                 AppUserId = userId,
@@ -180,6 +188,64 @@ namespace CaterFlow.Controllers
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
             SaveCart(new List<CartSessionItem>());
+
+            // ── Week 4: Logging ──
+            await _loggingService.LogOrderAsync("OrderCreated", userId, userEmail,
+                $"Order #{order.Id} created with {order.Items.Count} item(s), total {order.TotalPrice:C}");
+
+            await _loggingService.LogPaymentAsync("PaymentProcessed", userId, userEmail,
+                $"Payment for Order #{order.Id}: {order.TotalPrice:C}, card ending {order.CardLastFourDigits}");
+
+            // ── Week 4: Email ──
+            var emailItems = order.Items.Select(i => new OrderEmailItem
+            {
+                Name = i.MenuItemName,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice + i.CustomizationTotal,
+                LineTotal = i.LineTotal
+            }).ToList();
+
+            // Send to user
+            if (!string.IsNullOrWhiteSpace(userEmail))
+            {
+                await _emailService.SendOrderConfirmationToUserAsync(
+                    userEmail, userName ?? "Customer", order.Id, order.TotalPrice, emailItems);
+            }
+
+            // Send to caterer(s)
+            var catererIds = cart.Items.Select(i => i.MenuItemId).Distinct().ToList();
+            var menuItemsWithCaterers = await _context.MenuItems
+                .Include(m => m.CatererProfile)
+                    .ThenInclude(c => c.AppUser)
+                .Where(m => catererIds.Contains(m.Id))
+                .ToListAsync();
+
+            var caterers = menuItemsWithCaterers
+                .Select(m => m.CatererProfile)
+                .Where(c => c != null)
+                .DistinctBy(c => c.Id)
+                .ToList();
+
+            foreach (var caterer in caterers)
+            {
+                var catererEmail = caterer.AppUser?.Email;
+                if (!string.IsNullOrWhiteSpace(catererEmail))
+                {
+                    var catererItems = order.Items
+                        .Where(i => menuItemsWithCaterers.Any(m => m.Id == i.MenuItemId && m.CatererProfileId == caterer.Id))
+                        .Select(i => new OrderEmailItem
+                        {
+                            Name = i.MenuItemName,
+                            Quantity = i.Quantity,
+                            UnitPrice = i.UnitPrice + i.CustomizationTotal,
+                            LineTotal = i.LineTotal
+                        }).ToList();
+
+                    await _emailService.SendOrderNotificationToCatererAsync(
+                        catererEmail, caterer.BusinessName, userName ?? "Customer",
+                        order.Id, order.TotalPrice, catererItems);
+                }
+            }
 
             return RedirectToAction(nameof(Success), new { id = order.Id });
         }
@@ -277,6 +343,9 @@ namespace CaterFlow.Controllers
 
             if (order == null) return null;
 
+            // Check if user has rated this order
+            var hasRated = await _context.Ratings.AnyAsync(r => r.OrderId == orderId && r.AppUserId == userId);
+
             return new OrderDetailsViewModel
             {
                 Id = order.Id,
@@ -285,6 +354,7 @@ namespace CaterFlow.Controllers
                 Status = order.Status.ToString(),
                 TotalPrice = order.TotalPrice,
                 CardLastFourDigits = order.CardLastFourDigits ?? string.Empty,
+                HasBeenRated = hasRated,
                 Items = order.Items.Select(i => new CartItemViewModel
                 {
                     MenuItemId = i.MenuItemId,

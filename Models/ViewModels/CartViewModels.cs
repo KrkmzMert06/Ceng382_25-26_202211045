@@ -116,6 +116,7 @@ namespace CaterFlow.Models.ViewModels
         public string Status { get; set; } = string.Empty;
         public decimal TotalPrice { get; set; }
         public string CardLastFourDigits { get; set; } = string.Empty;
+        public bool HasBeenRated { get; set; }
         public List<CartItemViewModel> Items { get; set; } = new();
     }
 }

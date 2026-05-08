@@ -3,7 +3,7 @@
     ViewData["Title"] = "My Orders";
 }
 
-<div class="page-header"><h1>My Orders</h1></div>
+<div class="page-header"><h1>📋 My Orders</h1></div>
 @if (!Model.Any())
 {
     <div class="empty-state">No orders yet.</div>
@@ -22,7 +22,13 @@ else
                     <td>@order.Status</td>
                     <td>@order.ItemCount</td>
                     <td>@order.TotalPrice.ToString("C")</td>
-                    <td><a asp-action="Details" asp-route-id="@order.Id">Details</a></td>
+                    <td class="table-actions">
+                        <a asp-action="Details" asp-route-id="@order.Id" class="secondary-button small-btn">Details</a>
+                        @if (order.Status == "Completed")
+                        {
+                            <a asp-controller="Rating" asp-action="Rate" asp-route-orderId="@order.Id" class="primary-button small-btn">⭐ Rate</a>
+                        }
+                    </td>
                 </tr>
             }
             </tbody>
