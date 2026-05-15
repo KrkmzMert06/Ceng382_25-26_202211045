@@ -43,7 +43,7 @@ namespace CaterFlow.Services
 
             var greeting = isForCaterer
                 ? $"Hello {recipientName},<br/>You have received a new order from <strong>{customerName}</strong>."
-                : $"Hello {recipientName},<br/>Your order has been confirmed. Thank you for choosing CaterFlow!";
+                : $"Hello {recipientName},<br/>Your order has been confirmed. Thank you for choosing WeHungry!";
 
             return $@"
 <!DOCTYPE html>
@@ -51,12 +51,12 @@ namespace CaterFlow.Services
 <head><meta charset='utf-8'/></head>
 <body style='font-family:Segoe UI,Arial,sans-serif;margin:0;padding:0;background:#f8f5f0;'>
 <div style='max-width:600px;margin:30px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);'>
-    <div style='background:#1f2937;color:#fff;padding:24px 30px;'>
-        <h1 style='margin:0;font-size:24px;'>🍽️ CaterFlow</h1>
+    <div style='background:#1a1a2e;color:#fff;padding:24px 30px;'>
+        <h1 style='margin:0;font-size:24px;'>🍽️ WeHungry</h1>
     </div>
     <div style='padding:30px;'>
         <p>{greeting}</p>
-        <h2 style='color:#8b5e3c;'>Order #{orderId}</h2>
+        <h2 style='color:#d97706;'>Order #{orderId}</h2>
         <table style='width:100%;border-collapse:collapse;margin:16px 0;'>
             <thead>
                 <tr style='background:#f8f5f0;'>
@@ -69,10 +69,10 @@ namespace CaterFlow.Services
             <tbody>{itemsHtml}</tbody>
         </table>
         <div style='text-align:right;padding:12px 0;'>
-            <strong style='font-size:18px;color:#8b5e3c;'>Total: {totalPrice:C}</strong>
+            <strong style='font-size:18px;color:#d97706;'>Total: {totalPrice:C}</strong>
         </div>
         <hr style='border:none;border-top:1px solid #eee;margin:20px 0;' />
-        <p style='color:#6b7280;font-size:14px;'>This is an automated email from CaterFlow. Please do not reply.</p>
+        <p style='color:#6b7280;font-size:14px;'>This is an automated email from WeHungry. Please do not reply.</p>
     </div>
 </div>
 </body>

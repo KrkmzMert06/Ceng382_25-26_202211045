@@ -6,7 +6,10 @@
 <div class="page-header">
     <div>
         <h1>Order #@Model.Id</h1>
-        <p class="muted">Status: @Model.Status | Created: @Model.CreatedAt.ToLocalTime().ToString("g")</p>
+        <p class="muted">
+            <span class="status-badge status-@Model.Status.ToLower()">@Model.Status</span>
+            Created: @Model.CreatedAt.ToLocalTime().ToString("g")
+        </p>
     </div>
     <div class="button-row">
         @if (Model.Status == "Completed" && !Model.HasBeenRated)
@@ -15,9 +18,11 @@
         }
         else if (Model.HasBeenRated)
         {
-            <span class="badge badge-green">✓ Rated</span>
+            <span class="badge badge-green">Rated</span>
         }
-        <a asp-action="Orders" class="secondary-button">← Back to Orders</a>
+        <a asp-action="Receipt" asp-route-id="@Model.Id" class="secondary-button">Receipt</a>
+        <a asp-action="Agreement" asp-route-id="@Model.Id" class="secondary-button">Agreement</a>
+        <a asp-action="Orders" class="secondary-button">Back to Orders</a>
     </div>
 </div>
 

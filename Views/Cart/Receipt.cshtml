@@ -1,0 +1,90 @@
+@model CaterFlow.Models.ViewModels.OrderReceiptViewModel
+@{
+    ViewData["Title"] = $"Receipt {Model.ReceiptNumber}";
+}
+
+<div class="page-header print-hidden">
+    <div>
+        <h1>Receipt @Model.ReceiptNumber</h1>
+        <p class="muted">Generated dynamically from order #@Model.Id.</p>
+    </div>
+    <div class="button-row">
+        <button type="button" class="primary-button" onclick="window.print()">Print / Save PDF</button>
+        <a asp-action="Agreement" asp-route-id="@Model.Id" class="secondary-button">Service Agreement</a>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="secondary-button">Order Details</a>
+    </div>
+</div>
+
+<section class="document-card">
+    <div class="document-header">
+        <div>
+            <h2>🍽️ WeHungry</h2>
+            <p>Receipt @Model.ReceiptNumber</p>
+        </div>
+        <div class="document-meta">
+            <span>Generated @Model.GeneratedAt.ToLocalTime().ToString("g")</span>
+            <span>
+                <span class="status-badge status-@Model.Status.ToLower()">@Model.Status</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="document-grid">
+        <div>
+            <strong>Customer</strong>
+            <p>
+                @Model.CustomerName<br />@Model.CustomerEmail
+                @if (!string.IsNullOrWhiteSpace(Model.CustomerAddress))
+                {
+                    <br /><text>@Model.CustomerAddress</text>
+                }
+            </p>
+        </div>
+        <div>
+            <strong>Payment</strong>
+            <p>Paid @Model.PaidAt?.ToLocalTime().ToString("g")<br />Card ending @Model.CardLastFourDigits</p>
+        </div>
+        <div>
+            <strong>Order</strong>
+            <p>#@Model.Id<br />@Model.CreatedAt.ToLocalTime().ToString("g")</p>
+        </div>
+    </div>
+
+    <table class="data-table document-table">
+        <thead>
+            <tr><th>Item</th><th>Qty</th><th>Unit</th><th>Custom</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>
+                    <strong>@item.MenuItemName</strong>
+                    @if (item.SelectedCustomizations.Any())
+                    {
+                        <div class="muted">
+                            @string.Join(", ", item.SelectedCustomizations.Select(c => $"{c.GroupName}: {(c.IsRemovableIngredient ? "Remove " : "")}{c.OptionName}"))
+                        </div>
+                    }
+                </td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitPrice.ToString("C")</td>
+                <td>@item.CustomizationTotal.ToString("C")</td>
+                <td>@item.LineTotal.ToString("C")</td>
+            </tr>
+        }
+        </tbody>
+        <tfoot>
+            <tr><th colspan="4">Total</th><th>@Model.TotalPrice.ToString("C")</th></tr>
+        </tfoot>
+    </table>
+
+    <div class="receipt-thank-you">
+        <p>Thank you for your order, <strong>@Model.CustomerName</strong>! 🎉</p>
+        <p class="muted">We appreciate your trust in WeHungry. Your freshly prepared meal is on its way. If you enjoyed your experience, don't forget to leave a rating!</p>
+    </div>
+
+    <div class="receipt-footer">
+        <p class="muted">WeHungry Inc. — Fresh catering, delivered. This receipt was generated automatically and serves as proof of your transaction.</p>
+    </div>
+</section>

@@ -1,11 +1,32 @@
 @{
     ViewData["Title"] = "Admin Dashboard";
+    var recentOrders = ViewBag.RecentOrders as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
 }
 
-<h1>📊 Admin Dashboard</h1>
-<p class="muted">System overview and management.</p>
+<div class="page-header">
+    <div>
+        <h1>Admin Dashboard</h1>
+        <p class="muted">System overview and management tools.</p>
+    </div>
+    <div class="button-row">
+        <a asp-action="Report" class="primary-button">📈 Generate Report</a>
+        <a asp-action="Logs" class="secondary-button">📝 System Logs</a>
+    </div>
+</div>
 
 <div class="stats-grid">
+    <div class="stat-card stat-highlight">
+        <span>💰 Revenue</span>
+        <strong>@(((decimal)(ViewBag.TotalRevenue ?? 0m)).ToString("C"))</strong>
+    </div>
+    <div class="stat-card">
+        <span>📦 Total Orders</span>
+        <strong>@ViewBag.OrderCount</strong>
+    </div>
+    <div class="stat-card">
+        <span>📅 Today</span>
+        <strong>@ViewBag.TodayOrders</strong>
+    </div>
     <div class="stat-card">
         <span>👥 Users</span>
         <strong>@ViewBag.UserCount</strong>
@@ -15,12 +36,8 @@
         <strong>@ViewBag.CatererCount</strong>
     </div>
     <div class="stat-card">
-        <span>🍽️ Menu Items</span>
+        <span>🍽 Menu Items</span>
         <strong>@ViewBag.MenuCount</strong>
-    </div>
-    <div class="stat-card">
-        <span>📦 Orders</span>
-        <strong>@ViewBag.OrderCount</strong>
     </div>
     <div class="stat-card">
         <span>⭐ Ratings</span>
@@ -32,6 +49,34 @@
     </div>
 </div>
 
-<div style="margin-top:24px;">
-    <a asp-action="Logs" class="primary-button">📝 View System Logs</a>
-</div>
+@if (recentOrders.Any())
+{
+    <div class="dashboard-section">
+        <h2>Recent Orders</h2>
+        <div class="table-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in recentOrders)
+                    {
+                        <tr>
+                            <td>#@order.Id</td>
+                            <td>@(((DateTime)order.CreatedAt).ToLocalTime().ToString("g"))</td>
+                            <td>@order.Customer</td>
+                            <td><span class="status-badge status-@(((string)order.Status).ToLower())">@order.Status</span></td>
+                            <td>@(((decimal)order.TotalPrice).ToString("C"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

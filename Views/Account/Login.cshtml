@@ -3,25 +3,38 @@
     ViewData["Title"] = "Login";
 }
 
-<div class="auth-card">
-    <h1>Login</h1>
-    <p class="muted">Continue to your role-based dashboard.</p>
+<div class="auth-page">
+    <section class="auth-hero-panel">
+        <span class="eyebrow">WeHungry</span>
+        <h1>Hungry? We got you covered.</h1>
+        <p>Find meals for teams, meetings and events, customize your order, and track everything from one place.</p>
+        <div class="auth-highlights">
+            <span><span class="app-icon">🍽</span> Curated menus</span>
+            <span><span class="app-icon">📍</span> Nearby caterers</span>
+            <span><span class="app-icon">🧾</span> Instant receipts</span>
+        </div>
+    </section>
 
-    <form asp-action="Login" method="post" class="form-grid">
-        <div asp-validation-summary="ModelOnly" class="validation"></div>
+    <section class="auth-card">
+        <h1>Welcome back</h1>
+        <p class="muted">Sign in to order catering or manage your menu.</p>
 
-        <label asp-for="Email"></label>
-        <input asp-for="Email" />
-        <span asp-validation-for="Email" class="validation"></span>
+        <form asp-action="Login" method="post" class="form-grid">
+            <div asp-validation-summary="ModelOnly" class="validation"></div>
 
-        <label asp-for="Password"></label>
-        <input asp-for="Password" />
-        <span asp-validation-for="Password" class="validation"></span>
+            <label asp-for="Email"></label>
+            <input asp-for="Email" placeholder="you@example.com" />
+            <span asp-validation-for="Email" class="validation"></span>
 
-        <button type="submit" class="primary-btn">Login</button>
-    </form>
+            <label asp-for="Password"></label>
+            <input asp-for="Password" placeholder="Enter your password" />
+            <span asp-validation-for="Password" class="validation"></span>
 
-    <p class="muted">No account yet? <a asp-controller="Account" asp-action="Register">Register</a></p>
+            <button type="submit" class="primary-btn">Sign in</button>
+        </form>
+
+        <p class="muted">New to WeHungry? <a asp-controller="Account" asp-action="Register">Create an account</a></p>
+    </section>
 </div>
 
 @section Scripts {

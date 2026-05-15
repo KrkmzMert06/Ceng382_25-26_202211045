@@ -1,0 +1,158 @@
+@model CaterFlow.Models.ViewModels.AdminReportViewModel
+@{
+    ViewData["Title"] = "Admin Report";
+    var fromRoute = Model.From?.ToString("yyyy-MM-dd");
+    var toRoute = Model.To?.ToString("yyyy-MM-dd");
+}
+
+<div class="page-header print-hidden">
+    <div>
+        <h1>Admin Report</h1>
+        <p class="muted">Dynamic operational report generated from live order, rating, and log data.</p>
+    </div>
+    <div class="button-row">
+        <button type="button" class="primary-button" onclick="window.print()">Print / Save PDF</button>
+        <a asp-action="Index" class="secondary-button">Dashboard</a>
+    </div>
+</div>
+
+<div class="log-filter-card print-hidden">
+    <form method="get" asp-action="Report" class="log-filter-form">
+        <div class="report-filter-row">
+            <div>
+                <label>From</label>
+                <input type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div>
+                <label>To</label>
+                <input type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div>
+                <label>Status</label>
+                <select name="status">
+                    <option value="">All Statuses</option>
+                    @foreach (var status in new[] { "Pending", "Completed", "Cancelled" })
+                    {
+                        if (Model.StatusFilter == status)
+                        {
+                            <option value="@status" selected="selected">@status</option>
+                        }
+                        else
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label>Search</label>
+                <input type="text" name="search" value="@Model.SearchTerm" placeholder="Order, email, item" />
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="primary-button">Filter</button>
+                <a asp-action="Report" class="secondary-button">Reset</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<section class="document-card">
+    <div class="document-header">
+        <div>
+            <h2>WeHungry Operational Report</h2>
+            <p>Generated @Model.GeneratedAt.ToLocalTime().ToString("g")</p>
+        </div>
+        <div class="document-meta">
+            <span>@(Model.From?.ToString("d") ?? "Start") - @(Model.To?.ToString("d") ?? "Today")</span>
+            <span>@(Model.StatusFilter ?? "All statuses")</span>
+        </div>
+    </div>
+
+    <div class="report-kpi-grid">
+        <div><span>Orders</span><strong>@Model.TotalOrders</strong></div>
+        <div><span>Completed</span><strong>@Model.CompletedOrders</strong></div>
+        <div><span>Revenue</span><strong>@Model.TotalRevenue.ToString("C")</strong></div>
+        <div><span>Avg. Order</span><strong>@Model.AverageOrderValue.ToString("C")</strong></div>
+        <div><span>Items Sold</span><strong>@Model.TotalItemsSold</strong></div>
+        <div><span>Avg. Rating</span><strong>@Model.AverageMenuRating.ToString("0.0")</strong></div>
+    </div>
+
+    <h3>Top Menu Items</h3>
+    @if (!Model.TopMenuItems.Any())
+    {
+        <p class="muted">No menu item sales match the selected filters.</p>
+    }
+    else
+    {
+        <table class="data-table document-table">
+            <thead><tr><th>Item</th><th>Quantity</th><th>Revenue</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.TopMenuItems)
+            {
+                <tr><td>@item.Name</td><td>@item.QuantitySold</td><td>@item.Revenue.ToString("C")</td></tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    <h3>Orders</h3>
+    @if (!Model.Orders.Any())
+    {
+        <p class="muted">No orders match the selected filters.</p>
+    }
+    else
+    {
+        <table class="data-table document-table">
+            <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Status</th><th>Items</th><th>Total</th></tr></thead>
+            <tbody>
+            @foreach (var order in Model.Orders)
+            {
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@order.CustomerEmail</td>
+                    <td><span class="status-badge status-@order.Status.ToLower()">@order.Status</span></td>
+                    <td>@order.ItemCount</td>
+                    <td>@order.TotalPrice.ToString("C")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination print-hidden">
+        @if (Model.CurrentPage > 1)
+        {
+            <a asp-action="Report"
+               asp-route-from="@fromRoute"
+               asp-route-to="@toRoute"
+               asp-route-status="@Model.StatusFilter"
+               asp-route-search="@Model.SearchTerm"
+               asp-route-page="@(Model.CurrentPage - 1)"
+               class="page-link">Prev</a>
+        }
+        @for (int p = 1; p <= Model.TotalPages; p++)
+        {
+            <a asp-action="Report"
+               asp-route-from="@fromRoute"
+               asp-route-to="@toRoute"
+               asp-route-status="@Model.StatusFilter"
+               asp-route-search="@Model.SearchTerm"
+               asp-route-page="@p"
+               class="page-link @(p == Model.CurrentPage ? "active" : "")">@p</a>
+        }
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a asp-action="Report"
+               asp-route-from="@fromRoute"
+               asp-route-to="@toRoute"
+               asp-route-status="@Model.StatusFilter"
+               asp-route-search="@Model.SearchTerm"
+               asp-route-page="@(Model.CurrentPage + 1)"
+               class="page-link">Next</a>
+        }
+    </div>
+}

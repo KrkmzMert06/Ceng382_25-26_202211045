@@ -4,41 +4,57 @@
     ViewData["Title"] = "Register";
 }
 
-<div class="auth-card">
-    <h1>Create Account</h1>
-    <p class="muted">Choose a role and join CaterFlow.</p>
+<div class="auth-page">
+    <section class="auth-hero-panel">
+        <span class="eyebrow">Join WeHungry</span>
+        <h1>Start ordering or selling catering in minutes.</h1>
+        <p>Create a customer account to order meals, or register as a caterer to publish your menu on WeHungry.</p>
+        <div class="auth-highlights">
+            <span><span class="app-icon">🛒</span> Fast checkout</span>
+            <span><span class="app-icon">⭐</span> Ratings</span>
+            <span><span class="app-icon">📈</span> Caterer tools</span>
+        </div>
+    </section>
 
-    <form asp-action="Register" method="post" class="form-grid">
-        <div asp-validation-summary="ModelOnly" class="validation"></div>
+    <section class="auth-card">
+        <h1>Create account</h1>
+        <p class="muted">Tell us how you will use WeHungry.</p>
 
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" />
-        <span asp-validation-for="FullName" class="validation"></span>
+        <form asp-action="Register" method="post" class="form-grid">
+            <div asp-validation-summary="ModelOnly" class="validation"></div>
 
-        <label asp-for="Email"></label>
-        <input asp-for="Email" />
-        <span asp-validation-for="Email" class="validation"></span>
+            <label asp-for="FullName"></label>
+            <input asp-for="FullName" placeholder="Full name" />
+            <span asp-validation-for="FullName" class="validation"></span>
 
-        <label asp-for="Password"></label>
-        <input asp-for="Password" />
-        <span asp-validation-for="Password" class="validation"></span>
+            <label asp-for="Email"></label>
+            <input asp-for="Email" placeholder="you@example.com" />
+            <span asp-validation-for="Email" class="validation"></span>
 
-        <label asp-for="ConfirmPassword"></label>
-        <input asp-for="ConfirmPassword" />
-        <span asp-validation-for="ConfirmPassword" class="validation"></span>
+            <label asp-for="Password"></label>
+            <input asp-for="Password" placeholder="At least 6 characters" />
+            <span asp-validation-for="Password" class="validation"></span>
 
-        <label asp-for="Role"></label>
-        <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()"></select>
-        <span asp-validation-for="Role" class="validation"></span>
+            <label asp-for="ConfirmPassword"></label>
+            <input asp-for="ConfirmPassword" placeholder="Repeat password" />
+            <span asp-validation-for="ConfirmPassword" class="validation"></span>
 
-        <label asp-for="BusinessName"></label>
-        <input asp-for="BusinessName" placeholder="Required only for Caterer" />
-        <span asp-validation-for="BusinessName" class="validation"></span>
+            <label asp-for="Role"></label>
+            <select asp-for="Role">
+                <option value="@UserRole.User">Customer</option>
+                <option value="@UserRole.Caterer">Caterer</option>
+            </select>
+            <span asp-validation-for="Role" class="validation"></span>
 
-        <button type="submit" class="primary-btn">Register</button>
-    </form>
+            <label asp-for="BusinessName"></label>
+            <input asp-for="BusinessName" placeholder="Required only for caterers" />
+            <span asp-validation-for="BusinessName" class="validation"></span>
 
-    <p class="muted">Already have an account? <a asp-controller="Account" asp-action="Login">Login</a></p>
+            <button type="submit" class="primary-btn">Create account</button>
+        </form>
+
+        <p class="muted">Already registered? <a asp-controller="Account" asp-action="Login">Sign in</a></p>
+    </section>
 </div>
 
 @section Scripts {

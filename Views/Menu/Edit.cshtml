@@ -40,90 +40,249 @@
             Active
         </label>
 
-        <section class="customization-builder">
-            <h2>Removable Ingredients</h2>
-            <p class="muted">Add ingredients the user can remove.</p>
-            <div class="builder-row">
-                <input id="removableInput" type="text" placeholder="Example: Onion" />
-                <button type="button" class="secondary-btn" onclick="addRemovableIngredient()">Add</button>
+        <div class="modern-builder-container">
+            <h3>Catering Customizations</h3>
+            <p class="muted">Add specific options or removable items just for this menu package.</p>
+            
+            <div class="builder-sections-grid">
+                <div class="builder-box">
+                    <h4><i class="fa fa-minus-circle"></i> Removable Items</h4>
+                    <p class="muted text-sm">Example: "No Onion", "No Nuts"</p>
+                    <div class="builder-input-group">
+                        <input id="uiRemovableInput" type="text" placeholder="e.g. Onion" />
+                        <button type="button" class="btn-sm" onclick="uiAddRemovable()">Add</button>
+                    </div>
+                    <div id="uiRemovableChips" class="chip-container"></div>
+                </div>
+
+                <div class="builder-box">
+                    <h4><i class="fa fa-plus-circle"></i> Custom Options</h4>
+                    <p class="muted text-sm">Example: "Portion Size" -> "1 Pax", "1.5 Pax"</p>
+                    <div class="builder-input-group">
+                        <input id="uiGroupName" type="text" placeholder="Group: e.g. Portion Size" />
+                    </div>
+                    <div class="builder-input-group">
+                        <input id="uiOptionName" type="text" placeholder="Option: e.g. 1.5 Porsiyon" />
+                        <input id="uiOptionPrice" type="number" step="0.01" min="0" placeholder="+ Price (TL)" />
+                        <button type="button" class="btn-sm" onclick="uiAddGroupOption()">Add</button>
+                    </div>
+                    <div id="uiCustomGroupsContainer" class="groups-container"></div>
+                </div>
             </div>
-        </section>
+        </div>
 
-        <label asp-for="RemovableIngredientsText"></label>
-        <textarea asp-for="RemovableIngredientsText" rows="4"></textarea>
-        <span asp-validation-for="RemovableIngredientsText" class="validation"></span>
+        <div style="display:none;">
+            <textarea asp-for="RemovableIngredientsText" id="RemovableIngredientsText"></textarea>
+            <textarea asp-for="CustomizationGroupsText" id="CustomizationGroupsText"></textarea>
+        </div>
 
-        <section class="customization-builder">
-            <h2>Customization Group Builder</h2>
-            <p class="muted">Add grouped options with optional extra prices.</p>
-            <div class="builder-grid">
-                <div>
-                    <label for="groupNameInput">Group Name</label>
-                    <input id="groupNameInput" type="text" placeholder="Example: Sauces" />
-                </div>
-                <div>
-                    <label for="optionNameInput">Option Name</label>
-                    <input id="optionNameInput" type="text" placeholder="Example: Garlic Sauce" />
-                </div>
-                <div>
-                    <label for="priceModifierInput">Extra Price</label>
-                    <input id="priceModifierInput" type="number" step="0.01" min="0" placeholder="0" />
-                </div>
-            </div>
-            <button type="button" class="secondary-btn" onclick="addCustomizationOption()">Add Group Option</button>
-        </section>
-
-        <label asp-for="CustomizationGroupsText"></label>
-        <textarea asp-for="CustomizationGroupsText" rows="9"></textarea>
-        <span asp-validation-for="CustomizationGroupsText" class="validation"></span>
-        <small class="muted">Editing this text rebuilds the item customization groups in the database.</small>
-
-        <div class="button-row">
+        <div class="button-row mt-4">
             <button type="submit" class="primary-btn">Save Changes</button>
             <a class="secondary-btn" asp-action="MyItems">Cancel</a>
         </div>
     </form>
 </div>
 
+<style>
+    .modern-builder-container {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: var(--bg-alt);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+    }
+    .builder-sections-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    .builder-box {
+        background: var(--bg-color);
+        padding: 1rem;
+        border-radius: var(--radius-sm);
+        border: 1px dashed var(--border-color);
+    }
+    .builder-input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .builder-input-group input {
+        flex: 1;
+        padding: 0.4rem;
+        font-size: 0.9rem;
+    }
+    .btn-sm {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 0 1rem;
+        cursor: pointer;
+    }
+    .chip-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .chip {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .chip-remove {
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .groups-container {
+        margin-top: 1rem;
+    }
+    .group-card {
+        background: var(--bg-alt);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .group-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+        color: var(--primary-color);
+    }
+    .mt-4 { margin-top: 1.5rem; }
+    
+    @@media (max-width: 768px) {
+        .builder-sections-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        function appendLine(textareaId, line) {
-            const textarea = document.getElementById(textareaId);
-            const current = textarea.value.trimEnd();
-            textarea.value = current ? current + "\n" + line : line;
-            textarea.focus();
-        }
+        let removables = [];
+        let groups = {};
 
-        function addRemovableIngredient() {
-            const input = document.getElementById("removableInput");
-            const value = input.value.trim();
-            if (!value) return;
-            appendLine("RemovableIngredientsText", value);
-            input.value = "";
-        }
+        function renderUI() {
+            // Render Removables
+            const rContainer = document.getElementById('uiRemovableChips');
+            rContainer.innerHTML = '';
+            removables.forEach((r, idx) => {
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.innerHTML = `<span>${r}</span><span class="chip-remove" onclick="removeRemovable(${idx})">&times;</span>`;
+                rContainer.appendChild(chip);
+            });
+            document.getElementById('RemovableIngredientsText').value = removables.join('\n');
 
-        function addCustomizationOption() {
-            const groupInput = document.getElementById("groupNameInput");
-            const optionInput = document.getElementById("optionNameInput");
-            const priceInput = document.getElementById("priceModifierInput");
-            const groupName = groupInput.value.trim();
-            const optionName = optionInput.value.trim();
-            const price = priceInput.value.trim() || "0";
-            if (!groupName || !optionName) return;
-
-            const textarea = document.getElementById("CustomizationGroupsText");
-            const current = textarea.value;
-            const groupHeader = "Group: " + groupName;
-            let nextText = current.trimEnd();
-            if (!current.includes(groupHeader)) {
-                nextText = nextText ? nextText + "\n\n" + groupHeader : groupHeader;
+            // Render Groups
+            const gContainer = document.getElementById('uiCustomGroupsContainer');
+            gContainer.innerHTML = '';
+            let groupText = '';
+            
+            for (const [gName, options] of Object.entries(groups)) {
+                if(groupText) groupText += '\n\n';
+                groupText += `Group: ${gName}`;
+                
+                const card = document.createElement('div');
+                card.className = 'group-card';
+                card.innerHTML = `<div class="group-title">${gName} <span class="chip-remove" style="color:var(--text-color); float:right;" onclick="removeGroup('${gName}')">&times;</span></div>`;
+                
+                const chipCont = document.createElement('div');
+                chipCont.className = 'chip-container';
+                
+                options.forEach((opt, idx) => {
+                    groupText += `\n${opt.name}|${opt.price}`;
+                    const oChip = document.createElement('div');
+                    oChip.className = 'chip';
+                    oChip.style.background = 'var(--text-color)';
+                    oChip.innerHTML = `<span>${opt.name} (+${opt.price}TL)</span><span class="chip-remove" onclick="removeOption('${gName}', ${idx})">&times;</span>`;
+                    chipCont.appendChild(oChip);
+                });
+                
+                card.appendChild(chipCont);
+                gContainer.appendChild(card);
             }
-            nextText += "\n" + optionName + "|" + price;
-            textarea.value = nextText;
-            optionInput.value = "";
-            priceInput.value = "";
-            optionInput.focus();
+            document.getElementById('CustomizationGroupsText').value = groupText;
         }
+
+        function uiAddRemovable() {
+            const val = document.getElementById('uiRemovableInput').value.trim();
+            if(val && !removables.includes(val)) {
+                removables.push(val);
+                document.getElementById('uiRemovableInput').value = '';
+                renderUI();
+            }
+        }
+
+        function removeRemovable(idx) {
+            removables.splice(idx, 1);
+            renderUI();
+        }
+
+        function uiAddGroupOption() {
+            const gName = document.getElementById('uiGroupName').value.trim();
+            const oName = document.getElementById('uiOptionName').value.trim();
+            const oPrice = document.getElementById('uiOptionPrice').value.trim() || "0";
+            
+            if(gName && oName) {
+                if(!groups[gName]) groups[gName] = [];
+                groups[gName].push({name: oName, price: oPrice});
+                document.getElementById('uiOptionName').value = '';
+                document.getElementById('uiOptionPrice').value = '';
+                renderUI();
+            }
+        }
+        
+        function removeOption(gName, idx) {
+            groups[gName].splice(idx, 1);
+            if(groups[gName].length === 0) delete groups[gName];
+            renderUI();
+        }
+        
+        function removeGroup(gName) {
+            delete groups[gName];
+            renderUI();
+        }
+
+        document.getElementById('uiRemovableInput').addEventListener('keypress', function(e){ if(e.key === 'Enter'){ e.preventDefault(); uiAddRemovable(); } });
+        document.getElementById('uiOptionName').addEventListener('keypress', function(e){ if(e.key === 'Enter'){ e.preventDefault(); uiAddGroupOption(); } });
+        document.getElementById('uiOptionPrice').addEventListener('keypress', function(e){ if(e.key === 'Enter'){ e.preventDefault(); uiAddGroupOption(); } });
+
+        window.onload = function() {
+            const remTxt = document.getElementById('RemovableIngredientsText').value;
+            if(remTxt) {
+                remTxt.split('\n').forEach(line => {
+                    const t = line.trim();
+                    if(t) removables.push(t);
+                });
+            }
+
+            const grpTxt = document.getElementById('CustomizationGroupsText').value;
+            if(grpTxt) {
+                let currentGroup = null;
+                grpTxt.split('\n').forEach(line => {
+                    const t = line.trim();
+                    if(!t) return;
+                    if(t.startsWith('Group: ')) {
+                        currentGroup = t.substring(7).trim();
+                        if(!groups[currentGroup]) groups[currentGroup] = [];
+                    } else if (currentGroup && t.includes('|')) {
+                        const parts = t.split('|');
+                        groups[currentGroup].push({name: parts[0].trim(), price: parts[1].trim()});
+                    }
+                });
+            }
+            renderUI();
+        };
     </script>
 }

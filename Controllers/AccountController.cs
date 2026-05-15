@@ -37,6 +37,10 @@ namespace CaterFlow.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            // Admin accounts cannot be created through registration — only via seed data
+            if (model.Role == UserRole.Admin)
+                model.Role = UserRole.User;
+
             if (model.Role == UserRole.Caterer && string.IsNullOrWhiteSpace(model.BusinessName))
                 ModelState.AddModelError(nameof(model.BusinessName), "Business name is required for caterers.");
 
@@ -170,6 +174,9 @@ namespace CaterFlow.Controllers
                 }
             }
 
+            // Re-sign-in to refresh the Address claim in the cookie
+            await SignInAsync(user);
+
             TempData["Success"] = "Location updated successfully.";
             return RedirectByRole();
         }
@@ -181,7 +188,8 @@ namespace CaterFlow.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim(ClaimTypes.StreetAddress, user.Address ?? "")
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

@@ -3,65 +3,81 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CaterFlow</title>
+    <title>@ViewData["Title"] - WeHungry</title>
+    <link rel="icon" type="image/png" href="/images/wehungry-logo.png" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
+    @{
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+        var userRole = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Caterer") ? "Caterer" : User.IsInRole("User") ? "Customer" : "";
+        var userAddress = User.FindFirst(System.Security.Claims.ClaimTypes.StreetAddress)?.Value ?? "";
+    }
     <div class="layout">
         <div class="topbar">
-            <span class="brand">🍽️ CaterFlow</span>
+            <a class="brand" asp-controller="Home" asp-action="Index">
+                <img src="/images/wehungry-logo.png" alt="WeHungry" class="brand-logo" />
+                <span>
+                    <strong>WeHungry</strong>
+                    <small>Feed your cravings</small>
+                </span>
+            </a>
             <div class="user-area">
-                @if (User.Identity?.IsAuthenticated == true)
+                @if (isAuthenticated)
                 {
-                    <span>@User.Identity.Name</span>
+                    <span class="account-chip">
+                        <span>@User.Identity?.Name</span>
+                        <small>@userRole</small>
+                    </span>
                     @if (User.IsInRole("User"))
                     {
-                        <a asp-controller="Cart" asp-action="Index">🛒 Cart</a>
-                        <a asp-controller="Cart" asp-action="Orders">My Orders</a>
+                        <a asp-controller="Cart" asp-action="Index" class="topbar-link icon-link"><span class="app-icon">🛒</span> Cart</a>
                     }
-                    <a asp-controller="Account" asp-action="UpdateLocation" title="Update Location">📍</a>
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Account" asp-action="UpdateLocation" class="location-chip" title="Change delivery location">
+                            <span class="app-icon">📍</span>
+                            <span class="location-text">@(string.IsNullOrWhiteSpace(userAddress) ? "Set Location" : userAddress)</span>
+                        </a>
+                    }
                     <form asp-controller="Account" asp-action="Logout" method="post">
                         <button type="submit" class="link-button">Logout</button>
                     </form>
                 }
                 else
                 {
-                    <a asp-controller="Account" asp-action="Login">Login</a>
-                    <a asp-controller="Account" asp-action="Register">Register</a>
+                    <a asp-controller="Account" asp-action="Login" class="topbar-link">Login</a>
+                    <a asp-controller="Account" asp-action="Register" class="topbar-cta">Register</a>
                 }
             </div>
         </div>
-        <div class="main-wrapper">
+        <div class="main-wrapper @(isAuthenticated ? "" : "guest-wrapper")">
+            @if (isAuthenticated)
+            {
             <nav class="sidebar">
                 @if (User.IsInRole("User"))
                 {
-                    <a asp-controller="Home" asp-action="Index">🏠 Browse Menus</a>
-                    <a asp-controller="Cart" asp-action="Index">🛒 Cart</a>
-                    <a asp-controller="Cart" asp-action="Orders">📋 My Orders</a>
-                    <a asp-controller="Account" asp-action="UpdateLocation">📍 My Location</a>
+                    <a asp-controller="Home" asp-action="Index"><span class="app-icon">🍽</span> Restaurants & Menus</a>
+                    <a asp-controller="Cart" asp-action="Orders"><span class="app-icon">🧾</span> Orders</a>
                 }
                 @if (User.IsInRole("Caterer"))
                 {
-                    <a asp-controller="Menu" asp-action="MyItems">📋 My Menu</a>
-                    <a asp-controller="Menu" asp-action="Create">➕ Create Menu</a>
-                    <a asp-controller="Account" asp-action="UpdateLocation">📍 My Location</a>
+                    <a asp-controller="Menu" asp-action="MyItems"><span class="app-icon">📋</span> My Menu</a>
+                    <a asp-controller="Menu" asp-action="Create"><span class="app-icon">➕</span> Add Menu Item</a>
                 }
                 @if (User.IsInRole("Admin"))
                 {
-                    <a asp-controller="Admin" asp-action="Index">📊 Dashboard</a>
-                    <a asp-controller="Admin" asp-action="Logs">📝 System Logs</a>
-                }
-                @if (!(User.Identity?.IsAuthenticated ?? false))
-                {
-                    <a asp-controller="Account" asp-action="Login">Login</a>
-                    <a asp-controller="Account" asp-action="Register">Register</a>
+                    <a asp-controller="Admin" asp-action="Index"><span class="app-icon">📊</span> Dashboard</a>
+                    <a asp-controller="Admin" asp-action="Report"><span class="app-icon">📈</span> Reports</a>
+                    <a asp-controller="Admin" asp-action="Logs"><span class="app-icon">📝</span> System Logs</a>
                 }
             </nav>
+            }
             <main class="content">
                 @RenderBody()
             </main>
         </div>
-        <div class="footer">© 2026 CaterFlow - All Rights Reserved</div>
+        <div class="footer">WeHungry © 2026 — Feed your cravings</div>
     </div>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>

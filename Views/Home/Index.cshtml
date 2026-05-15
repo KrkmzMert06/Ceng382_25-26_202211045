@@ -1,6 +1,6 @@
-@model IEnumerable<CaterFlow.Models.ViewModels.NearbyMenuItemViewModel>
+@model IEnumerable<CaterFlow.Models.ViewModels.NearbyRestaurantViewModel>
 @{
-    ViewData["Title"] = "Available Menus";
+    ViewData["Title"] = "Restaurants";
     var hasLocation = (bool)(ViewBag.HasLocation ?? false);
     var userLat = ViewBag.UserLat as double?;
     var userLng = ViewBag.UserLng as double?;
@@ -8,178 +8,109 @@
     var apiKey = ViewContext.HttpContext.RequestServices.GetRequiredService<IConfiguration>()["GoogleMaps:ApiKey"] ?? "";
 }
 
-<div class="page-header">
-    <div>
-        <h1>Available Menus</h1>
-        <p class="muted">Choose menu items, select customizations and add them to your cart.</p>
+<section class="food-hero">
+    <div class="food-hero-content">
+        <span class="eyebrow">WeHungry</span>
+        <h1>Find restaurants and catering menus.</h1>
+        <p>Explore restaurants, customize dishes and order catering. Sign in to find nearby options.</p>
+        <form method="get" asp-action="Index" class="hero-location-form">
+            <input type="hidden" id="filterLat" name="lat" value="@(userLat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+            <input type="hidden" id="filterLng" name="lng" value="@(userLng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+            <button type="button" id="btnDetectLocation" class="secondary-button" onclick="detectLocation()">
+                <span class="app-icon">📍</span> Use my location
+            </button>
+            @{
+                var distances = new[] { 5.0, 10.0, 25.0, 50.0, 100.0, 500.0 };
+            }
+            <select name="maxDistance" class="distance-select" id="distanceSelect">
+                @foreach (var d in distances)
+                {
+                    if (maxDist == d)
+                    {
+                        <option value="@d" selected="selected">@d km</option>
+                    }
+                    else
+                    {
+                        <option value="@d">@d km</option>
+                    }
+                }
+            </select>
+            <button type="submit" class="primary-button">Show restaurants</button>
+        </form>
+        <p id="locationStatus" class="hero-location-status">
+            @if (hasLocation)
+            {
+                <text>Showing restaurants within @maxDist km of your delivery location.</text>
+            }
+            else
+            {
+                <text>Showing all restaurants. Sign in or use your location to find nearby options first.</text>
+            }
+        </p>
     </div>
-</div>
+</section>
 
 @if (TempData["CartMessage"] != null)
 {
     <div class="alert-success">@TempData["CartMessage"]</div>
 }
 
-<!-- Location Filter -->
-<div class="location-filter-card">
-    <div class="location-filter-header">
-        <strong>📍 Location-Based Filtering</strong>
-        @if (hasLocation)
-        {
-            <span class="badge badge-green">Location Active</span>
-        }
-        else
-        {
-            <span class="badge badge-gray">No Location Set</span>
-        }
-    </div>
-    <div class="location-filter-body">
-        <form method="get" asp-action="Index" class="location-form">
-            <input type="hidden" id="filterLat" name="lat" value="@(userLat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
-            <input type="hidden" id="filterLng" name="lng" value="@(userLng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
-            <div class="location-form-row">
-                <button type="button" id="btnDetectLocation" class="secondary-button" onclick="detectLocation()">
-                    📍 Detect My Location
-                </button>
-                <label class="distance-label">
-                    Max Distance:
-                    @{
-                        var distances = new[] { 5.0, 10.0, 25.0, 50.0, 100.0, 500.0 };
-                    }
-                    <select name="maxDistance" class="distance-select" id="distanceSelect">
-                        @foreach (var d in distances)
-                        {
-                            if (maxDist == d)
-                            {
-                                <option value="@d" selected="selected">@d km</option>
-                            }
-                            else
-                            {
-                                <option value="@d">@d km</option>
-                            }
-                        }
-                    </select>
-                </label>
-                <button type="submit" class="primary-button">Filter</button>
-                <a asp-action="Index" class="secondary-button">Show All</a>
-            </div>
-            <p id="locationStatus" class="muted" style="margin-top:8px;">
-                @if (hasLocation)
-                {
-                    <text>Showing restaurants within @maxDist km of your location.</text>
-                }
-                else
-                {
-                    <text>Click "Detect My Location" or set your location in settings to filter by distance.</text>
-                }
-            </p>
-        </form>
-    </div>
-</div>
-
-@if (hasLocation && !string.IsNullOrWhiteSpace(apiKey))
+@if (hasLocation)
 {
-    <!-- Google Map -->
     <div id="map" class="google-map"></div>
 }
 
+<div class="section-heading">
+    <div>
+        <h2>@(hasLocation ? "Restaurants near you" : "All restaurants")</h2>
+        <p class="muted">Choose a restaurant to view its full menu.</p>
+    </div>
+    <a asp-controller="Account" asp-action="UpdateLocation" class="secondary-button">Change delivery location</a>
+</div>
+
 @if (!Model.Any())
 {
-    <div class="empty-state">No menu items found in this area. Try increasing your distance filter or click "Show All".</div>
+    <div class="empty-state">No restaurants found in this area. Try increasing your distance or update your delivery location.</div>
 }
 else
 {
-    <div class="menu-grid">
-        @foreach (var item in Model)
+    <div class="restaurant-grid">
+        @foreach (var restaurant in Model)
         {
-            var imageSrc = string.IsNullOrWhiteSpace(item.ImageUrl) ? "/images/no-image.svg" : item.ImageUrl;
-            <div class="menu-card">
-                <img src="@imageSrc" alt="@item.Name" class="menu-image" onerror="this.onerror=null;this.src='/images/no-image.svg';" />
-                <h3>@item.Name</h3>
-                <p>@item.Description</p>
-                <div class="menu-meta">
-                    <span>Caterer: @item.CatererName</span>
-                    <strong>@item.Price.ToString("C")</strong>
-                </div>
-                <div class="menu-meta-extra">
-                    @if (item.AverageRating > 0)
-                    {
-                        <span class="rating-badge">⭐ @item.AverageRating.ToString("F1")</span>
-                    }
-                    else
-                    {
-                        <span class="rating-badge muted">No ratings yet</span>
-                    }
-                    @if (hasLocation && item.DistanceKm > 0)
-                    {
-                        <span class="distance-badge">📍 @item.DistanceKm.ToString("F1") km</span>
-                    }
-                </div>
-
-                <form asp-controller="Cart" asp-action="Add" method="post" class="cart-form">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="MenuItemId" value="@item.Id" />
-
-                    @if (item.CustomizationGroups.Any())
-                    {
-                        <div class="customization-list">
-                            <strong>Customization Options</strong>
-                            @foreach (var group in item.CustomizationGroups)
-                            {
-                                <div class="customization-group">
-                                    <span class="group-title">
-                                        @group.Name
-                                        @(group.IsRequired ? "(required)" : "")
-                                    </span>
-                                    @if (group.AllowsMultipleSelection)
-                                    {
-                                        <ul>
-                                            @foreach (var option in group.Options)
-                                            {
-                                                var optionText = option.IsRemovableIngredient ? $"Remove {option.Name}" : option.Name;
-                                                <li>
-                                                    <label class="option-row">
-                                                        <input type="checkbox" name="SelectedOptionIds" value="@option.Id" />
-                                                        <span>@optionText</span>
-                                                        @if (option.PriceModifier != 0)
-                                                        {
-                                                            <span class="price-mod">+@option.PriceModifier.ToString("C")</span>
-                                                        }
-                                                    </label>
-                                                </li>
-                                            }
-                                        </ul>
-                                    }
-                                    else
-                                    {
-                                        <select name="SelectedOptionIds" class="single-option-select" required="@group.IsRequired">
-                                            @if (!group.IsRequired)
-                                            {
-                                                <option value="0">No selection</option>
-                                            }
-                                            @foreach (var option in group.Options)
-                                            {
-                                                var optionText = option.IsRemovableIngredient ? $"Remove {option.Name}" : option.Name;
-                                                var priceText = option.PriceModifier == 0 ? "" : $" (+{option.PriceModifier.ToString("C")})";
-                                                <option value="@option.Id">@optionText@priceText</option>
-                                            }
-                                        </select>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="customization-list muted">No customization options.</div>
-                    }
-
-                    <div class="cart-actions-row">
-                        <label>Qty <input type="number" name="Quantity" value="1" min="1" max="99" class="qty-input" /></label>
-                        <button type="submit" class="primary-button">Add to Cart</button>
+            var imageSrc = string.IsNullOrWhiteSpace(restaurant.CoverImageUrl) ? "/images/no-image.svg" : restaurant.CoverImageUrl;
+            <a asp-action="Details"
+               asp-route-id="@restaurant.Id"
+               asp-route-lat="@userLat"
+               asp-route-lng="@userLng"
+               asp-route-maxDistance="@maxDist"
+               class="restaurant-card">
+                <img src="@imageSrc" alt="@restaurant.BusinessName" onerror="this.onerror=null;this.src='/images/no-image.svg';" />
+                <div class="restaurant-card-body">
+                    <div class="restaurant-title-row">
+                        <h3>@restaurant.BusinessName</h3>
+                        @if (restaurant.AverageRating > 0)
+                        {
+                            <span class="rating-badge">⭐ @restaurant.AverageRating.ToString("F1")</span>
+                        }
+                        else
+                        {
+                            <span class="rating-badge muted">New</span>
+                        }
                     </div>
-                </form>
-            </div>
+                    <p>@(restaurant.Description ?? "Fresh catering menu available for delivery.")</p>
+                    <div class="restaurant-meta-row">
+                        <span><span class="app-icon">🍽</span> @restaurant.MenuItemCount menu items</span>
+                        @if (restaurant.StartingPrice > 0)
+                        {
+                            <span>From @restaurant.StartingPrice.ToString("C")</span>
+                        }
+                        @if (hasLocation && restaurant.DistanceKm > 0)
+                        {
+                            <span><span class="app-icon">📍</span> @restaurant.DistanceKm.ToString("F1") km</span>
+                        }
+                    </div>
+                </div>
+            </a>
         }
     </div>
 }
@@ -189,50 +120,52 @@ else
         function detectLocation() {
             var status = document.getElementById('locationStatus');
             if (!navigator.geolocation) {
-                status.textContent = 'Geolocation is not supported by your browser.';
+                status.textContent = 'Your browser does not support location detection.';
                 return;
             }
-            status.textContent = 'Detecting your location...';
+            status.textContent = 'Finding your location...';
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     document.getElementById('filterLat').value = position.coords.latitude;
                     document.getElementById('filterLng').value = position.coords.longitude;
-                    status.textContent = 'Location detected! Click "Filter" to apply.';
+                    status.textContent = 'Location found. Click "Show restaurants" to update the list.';
                 },
-                function(error) {
-                    status.textContent = 'Unable to detect location. Please set it manually in settings.';
+                function() {
+                    status.textContent = 'Could not detect your location. You can update it from delivery location.';
                 }
             );
         }
     </script>
-    @if (hasLocation && !string.IsNullOrWhiteSpace(apiKey))
+    @if (hasLocation)
     {
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
-            function initMap() {
+            document.addEventListener('DOMContentLoaded', function() {
                 var userLat = @(userLat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0");
                 var userLng = @(userLng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0");
-                var map = new google.maps.Map(document.getElementById('map'), {
-                    center: { lat: userLat, lng: userLng },
-                    zoom: 12
-                });
-                new google.maps.Marker({
-                    position: { lat: userLat, lng: userLng },
-                    map: map,
-                    title: 'Your Location',
-                    icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-                });
-                @foreach (var item in Model.Where(i => i.CatererLat != 0 && i.CatererLng != 0).DistinctBy(i => i.CatererProfileId))
+                
+                var map = L.map('map').setView([userLat, userLng], 12);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                // User Location Marker
+                L.marker([userLat, userLng]).addTo(map)
+                    .bindPopup('<b>Your Delivery Location</b>').openPopup();
+
+                // Restaurant Markers
+                @foreach (var restaurant in Model.Where(i => i.CatererLat != 0 && i.CatererLng != 0))
                 {
                     <text>
-                    new google.maps.Marker({
-                        position: { lat: @item.CatererLat.ToString(System.Globalization.CultureInfo.InvariantCulture), lng: @item.CatererLng.ToString(System.Globalization.CultureInfo.InvariantCulture) },
-                        map: map,
-                        title: '@Html.Raw(item.CatererName.Replace("'", "\\'"))'
-                    });
+                    L.marker([@restaurant.CatererLat.ToString(System.Globalization.CultureInfo.InvariantCulture), @restaurant.CatererLng.ToString(System.Globalization.CultureInfo.InvariantCulture)])
+                        .addTo(map)
+                        .bindPopup('<b>@Html.Raw(restaurant.BusinessName.Replace("'", "\\'"))</b><br>@restaurant.DistanceKm.ToString("F1") km away');
                     </text>
                 }
-            }
+            });
         </script>
-        <script src="https://maps.googleapis.com/maps/api/js?key=@apiKey&callback=initMap" async defer></script>
     }
 }

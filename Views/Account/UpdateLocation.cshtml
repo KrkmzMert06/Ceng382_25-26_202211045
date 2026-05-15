@@ -70,10 +70,7 @@
     </form>
 </div>
 
-@if (!string.IsNullOrWhiteSpace(apiKey))
-{
     <div id="locationMap" class="google-map" style="margin-top:20px;"></div>
-}
 
 @section Scripts {
     <script>
@@ -96,39 +93,47 @@
             );
         }
     </script>
-    @if (!string.IsNullOrWhiteSpace(apiKey))
-    {
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
             var map, marker;
-            function initMap() {
+            document.addEventListener('DOMContentLoaded', function() {
                 var lat = parseFloat(document.getElementById('latitude').value) || 39.9208;
                 var lng = parseFloat(document.getElementById('longitude').value) || 32.8541;
-                map = new google.maps.Map(document.getElementById('locationMap'), {
-                    center: { lat: lat, lng: lng },
-                    zoom: 14
+                
+                // Initialize Leaflet map
+                map = L.map('locationMap').setView([lat, lng], 14);
+                
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                // Add draggable marker
+                marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+
+                // Update inputs on drag end
+                marker.on('dragend', function(e) {
+                    var pos = marker.getLatLng();
+                    document.getElementById('latitude').value = pos.lat.toFixed(6);
+                    document.getElementById('longitude').value = pos.lng.toFixed(6);
                 });
-                marker = new google.maps.Marker({
-                    position: { lat: lat, lng: lng },
-                    map: map,
-                    draggable: true,
-                    title: 'Your Location'
+
+                // Update marker and inputs on map click
+                map.on('click', function(e) {
+                    marker.setLatLng(e.latlng);
+                    document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+                    document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
                 });
-                marker.addListener('dragend', function(e) {
-                    document.getElementById('latitude').value = e.latLng.lat().toFixed(6);
-                    document.getElementById('longitude').value = e.latLng.lng().toFixed(6);
-                });
-                map.addListener('click', function(e) {
-                    marker.setPosition(e.latLng);
-                    document.getElementById('latitude').value = e.latLng.lat().toFixed(6);
-                    document.getElementById('longitude').value = e.latLng.lng().toFixed(6);
-                });
-            }
+            });
+
             function updateMap(lat, lng) {
-                var pos = { lat: lat, lng: lng };
-                map.setCenter(pos);
-                marker.setPosition(pos);
+                if (map && marker) {
+                    var pos = [lat, lng];
+                    map.setView(pos, 14);
+                    marker.setLatLng(pos);
+                }
             }
         </script>
-        <script src="https://maps.googleapis.com/maps/api/js?key=@apiKey&callback=initMap" async defer></script>
-    }
 }

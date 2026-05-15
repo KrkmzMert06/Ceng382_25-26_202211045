@@ -8,5 +8,8 @@
     <p>Order #@Model.Id was created and stored with status <strong>@Model.Status</strong>.</p>
     <p>Total: <strong>@Model.TotalPrice.ToString("C")</strong></p>
     <p>Card: **** **** **** @Model.CardLastFourDigits</p>
-    <a asp-action="Details" asp-route-id="@Model.Id" class="primary-link-button">View Order Details</a>
+    <div class="button-row" style="justify-content:center;">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="primary-link-button">View Order Details</a>
+        <a asp-action="Receipt" asp-route-id="@Model.Id" class="secondary-button">Open Receipt</a>
+    </div>
 </div>

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Security.Claims;
 using CaterFlow.Data;
 using CaterFlow.Models;
+using CaterFlow.Models.Entities;
 using CaterFlow.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,55 +19,109 @@ public class HomeController : Controller
         _context = context;
     }
 
-    [Authorize(Roles = "User")]
     public async Task<IActionResult> Index(double? lat, double? lng, double? maxDistance)
     {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var user = await _context.AppUsers.FindAsync(userId);
+        var (userLat, userLng, maxDist) = await ResolveLocationAsync(lat, lng, maxDistance);
 
-        // Use provided coordinates or user's saved location
-        double? userLat = lat ?? user?.Latitude;
-        double? userLng = lng ?? user?.Longitude;
-        double maxDist = maxDistance ?? 50; // default 50 km
+        var caterers = await _context.CatererProfiles
+            .Include(c => c.AppUser)
+            .ToListAsync();
 
-        ViewBag.UserLat = userLat;
-        ViewBag.UserLng = userLng;
-        ViewBag.MaxDistance = maxDist;
-        ViewBag.HasLocation = userLat.HasValue && userLng.HasValue;
+        var activeMenuItems = await _context.MenuItems
+            .Where(m => m.IsActive)
+            .ToListAsync();
 
-        var query = _context.MenuItems
-            .Include(x => x.CatererProfile)
-                .ThenInclude(c => c.AppUser)
+        var restaurants = caterers
+            .Select(c =>
+            {
+                var menuItems = activeMenuItems.Where(m => m.CatererProfileId == c.Id).ToList();
+                var distanceKm = CalculateDistanceForCaterer(userLat, userLng, c);
+                var coverImage = GetRestaurantCoverImage(c.BusinessName);
+
+                return new NearbyRestaurantViewModel
+                {
+                    Id = c.Id,
+                    BusinessName = c.BusinessName,
+                    Description = c.Description,
+                    Address = c.Address ?? c.AppUser.Address,
+                    CoverImageUrl = coverImage,
+                    DistanceKm = distanceKm,
+                    AverageRating = c.AverageRating,
+                    MenuItemCount = menuItems.Count,
+                    StartingPrice = menuItems.Any() ? menuItems.Min(m => m.Price) : 0,
+                    CatererLat = c.Latitude ?? 0,
+                    CatererLng = c.Longitude ?? 0
+                };
+            })
+            .Where(r => r.MenuItemCount > 0)
+            .ToList();
+
+        if (userLat.HasValue && userLng.HasValue)
+        {
+            restaurants = restaurants
+                .Where(r => r.CatererLat != 0 && r.CatererLng != 0 && r.DistanceKm <= maxDist)
+                .OrderBy(r => r.DistanceKm)
+                .ThenByDescending(r => r.AverageRating)
+                .ToList();
+        }
+        else
+        {
+            restaurants = restaurants
+                .OrderByDescending(r => r.AverageRating)
+                .ThenBy(r => r.BusinessName)
+                .ToList();
+        }
+
+        SetLocationViewBag(userLat, userLng, maxDist);
+        return View(restaurants);
+    }
+
+    public async Task<IActionResult> Details(int id, double? lat, double? lng, double? maxDistance)
+    {
+        var (userLat, userLng, maxDist) = await ResolveLocationAsync(lat, lng, maxDistance);
+
+        var caterer = await _context.CatererProfiles
+            .Include(c => c.AppUser)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (caterer == null || caterer.BusinessName.Contains("Archived", StringComparison.OrdinalIgnoreCase))
+            return NotFound();
+
+        var menuItems = await _context.MenuItems
             .Include(x => x.CustomizationGroups)
                 .ThenInclude(g => g.Options)
-            .Where(x => x.IsActive);
+            .Where(x => x.CatererProfileId == id && x.IsActive)
+            .OrderBy(x => x.Name)
+            .ToListAsync();
 
-        var menuItems = await query.OrderBy(x => x.Name).ToListAsync();
+        if (!menuItems.Any()) return NotFound();
 
-        var items = menuItems.Select(x =>
+        var coverImage = GetRestaurantCoverImage(caterer.BusinessName);
+        var distanceKm = CalculateDistanceForCaterer(userLat, userLng, caterer);
+
+        SetLocationViewBag(userLat, userLng, maxDist);
+        return View(new RestaurantDetailViewModel
         {
-            double distanceKm = 0;
-            if (userLat.HasValue && userLng.HasValue &&
-                x.CatererProfile.Latitude.HasValue && x.CatererProfile.Longitude.HasValue)
-            {
-                distanceKm = CalculateDistance(
-                    userLat.Value, userLng.Value,
-                    x.CatererProfile.Latitude.Value, x.CatererProfile.Longitude.Value);
-            }
-
-            return new NearbyMenuItemViewModel
+            Id = caterer.Id,
+            BusinessName = caterer.BusinessName,
+            Description = caterer.Description,
+            Address = caterer.Address ?? caterer.AppUser.Address,
+            CoverImageUrl = coverImage,
+            AverageRating = caterer.AverageRating,
+            DistanceKm = distanceKm,
+            MenuItems = menuItems.Select(x => new NearbyMenuItemViewModel
             {
                 Id = x.Id,
                 Name = x.Name,
                 Description = x.Description,
                 Price = x.Price,
                 ImageUrl = x.ImageUrl,
-                CatererName = x.CatererProfile.BusinessName,
-                CatererProfileId = x.CatererProfileId,
+                CatererName = caterer.BusinessName,
+                CatererProfileId = caterer.Id,
                 DistanceKm = distanceKm,
                 AverageRating = x.AverageRating,
-                CatererLat = x.CatererProfile.Latitude ?? 0,
-                CatererLng = x.CatererProfile.Longitude ?? 0,
+                CatererLat = caterer.Latitude ?? 0,
+                CatererLng = caterer.Longitude ?? 0,
                 CustomizationGroups = x.CustomizationGroups
                     .OrderBy(g => g.DisplayOrder)
                     .Select(g => new HomeCustomizationGroupViewModel
@@ -87,19 +142,8 @@ public class HomeController : Controller
                             .ToList()
                     })
                     .ToList()
-            };
-        }).ToList();
-
-        // Filter by distance if user has location
-        if (userLat.HasValue && userLng.HasValue)
-        {
-            items = items
-                .Where(x => x.CatererLat != 0 && x.CatererLng != 0 && x.DistanceKm <= maxDist)
-                .OrderBy(x => x.DistanceKm)
-                .ToList();
-        }
-
-        return View(items);
+            }).ToList()
+        });
     }
 
     public IActionResult Privacy()
@@ -129,4 +173,51 @@ public class HomeController : Controller
     }
 
     private static double ToRadians(double degrees) => degrees * Math.PI / 180;
+
+    private async Task<(double? UserLat, double? UserLng, double MaxDistance)> ResolveLocationAsync(double? lat, double? lng, double? maxDistance)
+    {
+        if (lat.HasValue && lng.HasValue)
+            return (lat, lng, maxDistance ?? 50);
+
+        if (User.Identity?.IsAuthenticated == true && User.IsInRole("User"))
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.AppUsers.FindAsync(userId);
+            return (user?.Latitude, user?.Longitude, maxDistance ?? 50);
+        }
+
+        return (lat, lng, maxDistance ?? 50);
+    }
+
+    private void SetLocationViewBag(double? userLat, double? userLng, double maxDistance)
+    {
+        ViewBag.UserLat = userLat;
+        ViewBag.UserLng = userLng;
+        ViewBag.MaxDistance = maxDistance;
+        ViewBag.HasLocation = userLat.HasValue && userLng.HasValue;
+    }
+
+    private static double CalculateDistanceForCaterer(double? userLat, double? userLng, CatererProfile caterer)
+    {
+        if (userLat.HasValue && userLng.HasValue && caterer.Latitude.HasValue && caterer.Longitude.HasValue)
+            return CalculateDistance(userLat.Value, userLng.Value, caterer.Latitude.Value, caterer.Longitude.Value);
+
+        return 0;
+    }
+
+    private static string GetRestaurantCoverImage(string businessName)
+    {
+        return businessName switch
+        {
+            "Mutfak No. 34" => "/images/demo-restaurants/covers/mutfak-no-34.png",
+            "Bosphorus Bites" => "/images/demo-restaurants/covers/bosphorus-bites.png",
+            "Anatolia Kitchen" => "/images/demo-restaurants/covers/anatolia-kitchen.png",
+            "Green Bowl Co." => "/images/demo-restaurants/covers/green-bowl-co.png",
+            "Pide & Lahmacun House" => "/images/demo-restaurants/covers/pide-house.png",
+            "Bella Pasta Catering" => "/images/demo-restaurants/covers/bella-pasta.png",
+            "Sushi Box Istanbul" => "/images/demo-restaurants/covers/sushi-box.png",
+            "Sweet Break Bakery" => "/images/demo-restaurants/covers/sweet-break.png",
+            _ => "/images/no-image.svg"
+        };
+    }
 }

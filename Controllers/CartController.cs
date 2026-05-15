@@ -259,13 +259,34 @@ namespace CaterFlow.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Orders()
+        public async Task<IActionResult> Orders(string? status, string? search, int page = 1)
         {
+            const int pageSize = 10;
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var orders = await _context.Orders
+
+            var query = _context.Orders
                 .Include(o => o.Items)
                 .Where(o => o.AppUserId == userId)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<OrderStatus>(status, out var parsedStatus))
+                query = query.Where(o => o.Status == parsedStatus);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(o =>
+                    o.Id.ToString().Contains(search) ||
+                    o.Items.Any(i => i.MenuItemName.Contains(search)));
+            }
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            page = Math.Clamp(page, 1, Math.Max(totalPages, 1));
+
+            var orders = await query
                 .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(o => new OrderHistoryItemViewModel
                 {
                     Id = o.Id,
@@ -276,7 +297,15 @@ namespace CaterFlow.Controllers
                 })
                 .ToListAsync();
 
-            return View(orders);
+            return View(new OrderHistoryListViewModel
+            {
+                Orders = orders,
+                StatusFilter = status,
+                SearchTerm = search,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                PageSize = pageSize
+            });
         }
 
         [HttpGet]
@@ -285,6 +314,108 @@ namespace CaterFlow.Controllers
             var details = await LoadOrderDetailsAsync(id);
             if (details == null) return NotFound();
             return View(details);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Receipt(int id)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var order = await _context.Orders
+                .Include(o => o.AppUser)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.SelectedCustomizations)
+                .FirstOrDefaultAsync(o => o.Id == id && o.AppUserId == userId);
+
+            if (order == null) return NotFound();
+
+            var hasRated = await _context.Ratings.AnyAsync(r => r.OrderId == id && r.AppUserId == userId);
+            var model = new OrderReceiptViewModel
+            {
+                Id = order.Id,
+                CreatedAt = order.CreatedAt,
+                PaidAt = order.PaidAt,
+                Status = order.Status.ToString(),
+                TotalPrice = order.TotalPrice,
+                CardLastFourDigits = order.CardLastFourDigits ?? string.Empty,
+                HasBeenRated = hasRated,
+                CustomerName = order.AppUser.FullName,
+                CustomerEmail = order.AppUser.Email,
+                CustomerAddress = order.AppUser.Address,
+                Items = order.Items.Select(i => new CartItemViewModel
+                {
+                    MenuItemId = i.MenuItemId,
+                    MenuItemName = i.MenuItemName,
+                    UnitPrice = i.UnitPrice,
+                    CustomizationTotal = i.CustomizationTotal,
+                    Quantity = i.Quantity,
+                    SelectedCustomizations = i.SelectedCustomizations.Select(s => new CartCustomizationViewModel
+                    {
+                        OptionId = s.MenuItemCustomizationOptionId ?? 0,
+                        GroupName = s.GroupName,
+                        OptionName = s.OptionName,
+                        PriceModifier = s.PriceModifier,
+                        IsRemovableIngredient = s.IsRemovableIngredient
+                    }).ToList()
+                }).ToList()
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Agreement(int id)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var order = await _context.Orders
+                .Include(o => o.AppUser)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.SelectedCustomizations)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.MenuItem)
+                        .ThenInclude(m => m!.CatererProfile)
+                            .ThenInclude(c => c.AppUser)
+                .FirstOrDefaultAsync(o => o.Id == id && o.AppUserId == userId);
+
+            if (order == null) return NotFound();
+
+            // Get caterer info from the first item's caterer
+            var firstCaterer = order.Items
+                .Select(i => i.MenuItem?.CatererProfile)
+                .FirstOrDefault(c => c != null);
+
+            var model = new OrderAgreementViewModel
+            {
+                Id = order.Id,
+                CreatedAt = order.CreatedAt,
+                PaidAt = order.PaidAt,
+                Status = order.Status.ToString(),
+                TotalPrice = order.TotalPrice,
+                CardLastFourDigits = order.CardLastFourDigits ?? string.Empty,
+                CustomerName = order.AppUser.FullName,
+                CustomerEmail = order.AppUser.Email,
+                CustomerAddress = order.AppUser.Address,
+                CatererBusinessName = firstCaterer?.BusinessName ?? "CaterFlow Partner",
+                CatererEmail = firstCaterer?.AppUser?.Email ?? "",
+                CatererAddress = firstCaterer?.Address,
+                Items = order.Items.Select(i => new CartItemViewModel
+                {
+                    MenuItemId = i.MenuItemId,
+                    MenuItemName = i.MenuItemName,
+                    UnitPrice = i.UnitPrice,
+                    CustomizationTotal = i.CustomizationTotal,
+                    Quantity = i.Quantity,
+                    SelectedCustomizations = i.SelectedCustomizations.Select(s => new CartCustomizationViewModel
+                    {
+                        OptionId = s.MenuItemCustomizationOptionId ?? 0,
+                        GroupName = s.GroupName,
+                        OptionName = s.OptionName,
+                        PriceModifier = s.PriceModifier,
+                        IsRemovableIngredient = s.IsRemovableIngredient
+                    }).ToList()
+                }).ToList()
+            };
+
+            return View(model);
         }
 
         private async Task<CartPageViewModel> BuildCartPageAsync()

@@ -1,0 +1,128 @@
+@model CaterFlow.Models.ViewModels.RestaurantDetailViewModel
+@{
+    ViewData["Title"] = Model.BusinessName;
+    var hasLocation = (bool)(ViewBag.HasLocation ?? false);
+    var imageSrc = string.IsNullOrWhiteSpace(Model.CoverImageUrl) ? "/images/no-image.svg" : Model.CoverImageUrl;
+}
+
+<section class="restaurant-hero" style="background-image: linear-gradient(rgba(17,24,39,.52), rgba(17,24,39,.72)), url('@imageSrc');">
+    <div>
+        <a asp-action="Index" class="back-link">Back to restaurants</a>
+        <h1>@Model.BusinessName</h1>
+        <p>@(Model.Description ?? "Fresh catering menu available for delivery.")</p>
+        <div class="restaurant-hero-meta">
+            @if (Model.AverageRating > 0)
+            {
+                <span>⭐ @Model.AverageRating.ToString("F1") rating</span>
+            }
+            else
+            {
+                <span>⭐ New restaurant</span>
+            }
+            @if (hasLocation && Model.DistanceKm > 0)
+            {
+                <span>📍 @Model.DistanceKm.ToString("F1") km away</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Address))
+            {
+                <span>@Model.Address</span>
+            }
+        </div>
+    </div>
+</section>
+
+@if (TempData["CartMessage"] != null)
+{
+    <div class="alert-success">@TempData["CartMessage"]</div>
+}
+
+<div class="section-heading">
+    <div>
+        <h2>Menu</h2>
+        <p class="muted">Select items from @Model.BusinessName and customize them before adding to cart.</p>
+    </div>
+</div>
+
+@if (!Model.MenuItems.Any())
+{
+    <div class="empty-state">This restaurant does not have active menu items yet.</div>
+}
+else
+{
+    <div class="restaurant-menu-list">
+        @foreach (var item in Model.MenuItems)
+        {
+            var itemImage = string.IsNullOrWhiteSpace(item.ImageUrl) ? "/images/no-image.svg" : item.ImageUrl;
+            <article class="restaurant-menu-item">
+                <img src="@itemImage" alt="@item.Name" onerror="this.onerror=null;this.src='/images/no-image.svg';" />
+                <div class="restaurant-menu-content">
+                    <div class="restaurant-title-row">
+                        <div>
+                            <h3>@item.Name</h3>
+                            <p>@item.Description</p>
+                        </div>
+                        <strong>@item.Price.ToString("C")</strong>
+                    </div>
+
+                    <form asp-controller="Cart" asp-action="Add" method="post" class="cart-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="MenuItemId" value="@item.Id" />
+
+                        @if (item.CustomizationGroups.Any())
+                        {
+                            <div class="customization-list">
+                                @foreach (var group in item.CustomizationGroups)
+                                {
+                                    <div class="customization-group">
+                                        <span class="group-title">
+                                            @group.Name @(group.IsRequired ? "(required)" : "")
+                                        </span>
+                                        @if (group.AllowsMultipleSelection)
+                                        {
+                                            <ul>
+                                                @foreach (var option in group.Options)
+                                                {
+                                                    var optionText = option.IsRemovableIngredient ? $"Remove {option.Name}" : option.Name;
+                                                    <li>
+                                                        <label class="option-row">
+                                                            <input type="checkbox" name="SelectedOptionIds" value="@option.Id" />
+                                                            <span>@optionText</span>
+                                                            @if (option.PriceModifier != 0)
+                                                            {
+                                                                <span class="price-mod">+@option.PriceModifier.ToString("C")</span>
+                                                            }
+                                                        </label>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <select name="SelectedOptionIds" class="single-option-select" required="@group.IsRequired">
+                                                @if (!group.IsRequired)
+                                                {
+                                                    <option value="0">No selection</option>
+                                                }
+                                                @foreach (var option in group.Options)
+                                                {
+                                                    var optionText = option.IsRemovableIngredient ? $"Remove {option.Name}" : option.Name;
+                                                    var priceText = option.PriceModifier == 0 ? "" : $" (+{option.PriceModifier.ToString("C")})";
+                                                    <option value="@option.Id">@optionText@priceText</option>
+                                                }
+                                            </select>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="cart-actions-row">
+                            <label>Qty <input type="number" name="Quantity" value="1" min="1" max="99" class="qty-input" /></label>
+                            <button type="submit" class="primary-button"><span class="app-icon">🛒</span> Add to Cart</button>
+                        </div>
+                    </form>
+                </div>
+            </article>
+        }
+    </div>
+}

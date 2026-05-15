@@ -9,6 +9,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<DemoDataSeeder>();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(2);
@@ -46,8 +47,14 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DemoDataSeeder>();
+    await seeder.SeedAsync();
+}
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

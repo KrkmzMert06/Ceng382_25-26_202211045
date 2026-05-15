@@ -99,6 +99,16 @@ namespace CaterFlow.Models.ViewModels
         }
     }
 
+    public class OrderHistoryListViewModel
+    {
+        public List<OrderHistoryItemViewModel> Orders { get; set; } = new();
+        public string? StatusFilter { get; set; }
+        public string? SearchTerm { get; set; }
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; }
+        public int PageSize { get; set; } = 10;
+    }
+
     public class OrderHistoryItemViewModel
     {
         public int Id { get; set; }
@@ -118,5 +128,25 @@ namespace CaterFlow.Models.ViewModels
         public string CardLastFourDigits { get; set; } = string.Empty;
         public bool HasBeenRated { get; set; }
         public List<CartItemViewModel> Items { get; set; } = new();
+    }
+
+    public class OrderReceiptViewModel : OrderDetailsViewModel
+    {
+        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerEmail { get; set; } = string.Empty;
+        public string? CustomerAddress { get; set; }
+        public string ReceiptNumber => $"CF-{Id:000000}";
+        public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class OrderAgreementViewModel : OrderReceiptViewModel
+    {
+        public string CatererBusinessName { get; set; } = string.Empty;
+        public string CatererEmail { get; set; } = string.Empty;
+        public string? CatererAddress { get; set; }
+        public string AgreementNumber => $"AGR-{Id:000000}";
+        public string DeliveryTerms => "Delivery within the estimated time frame. Freshly prepared upon order confirmation.";
+        public string CancellationPolicy => "Orders may be cancelled within 15 minutes of placement. After preparation begins, cancellations are not accepted.";
+        public string LiabilityClause => "WeHungry acts as an intermediary platform. Food quality and safety are the responsibility of the caterer.";
     }
 }

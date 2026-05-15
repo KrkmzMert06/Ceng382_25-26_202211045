@@ -1,0 +1,142 @@
+@model CaterFlow.Models.ViewModels.OrderAgreementViewModel
+@{
+    ViewData["Title"] = $"Agreement {Model.AgreementNumber}";
+}
+
+<div class="page-header print-hidden">
+    <div>
+        <h1>Service Agreement @Model.AgreementNumber</h1>
+        <p class="muted">Dynamically generated catering service agreement for order #@Model.Id.</p>
+    </div>
+    <div class="button-row">
+        <button type="button" class="primary-button" onclick="window.print()">Print / Save PDF</button>
+        <a asp-action="Receipt" asp-route-id="@Model.Id" class="secondary-button">View Receipt</a>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="secondary-button">Order Details</a>
+    </div>
+</div>
+
+<section class="document-card">
+    <div class="document-header">
+        <div>
+            <h2>WeHungry — Catering Service Agreement</h2>
+            <p>Agreement @Model.AgreementNumber</p>
+        </div>
+        <div class="document-meta">
+            <span>Generated @Model.GeneratedAt.ToLocalTime().ToString("g")</span>
+            <span>Order #@Model.Id</span>
+        </div>
+    </div>
+
+    <p class="agreement-intro">
+        This Service Agreement ("Agreement") is entered into on <strong>@Model.CreatedAt.ToLocalTime().ToString("D")</strong>
+        between the parties listed below, facilitated through the WeHungry platform. This document confirms the catering
+        service arrangement and outlines the terms and conditions governing this order.
+    </p>
+
+    <div class="document-grid">
+        <div class="agreement-party">
+            <strong>Customer (Client)</strong>
+            <p>
+                @Model.CustomerName<br />
+                @Model.CustomerEmail
+                @if (!string.IsNullOrWhiteSpace(Model.CustomerAddress))
+                {
+                    <br /><text>@Model.CustomerAddress</text>
+                }
+            </p>
+        </div>
+        <div class="agreement-party">
+            <strong>Caterer (Service Provider)</strong>
+            <p>
+                @Model.CatererBusinessName<br />
+                @Model.CatererEmail
+                @if (!string.IsNullOrWhiteSpace(Model.CatererAddress))
+                {
+                    <br /><text>@Model.CatererAddress</text>
+                }
+            </p>
+        </div>
+        <div class="agreement-party">
+            <strong>Platform</strong>
+            <p>
+                WeHungry Inc.<br />
+                platform@wehungry.com<br />
+                Facilitating party
+            </p>
+        </div>
+    </div>
+
+    <h3>1. Order Details</h3>
+    <table class="data-table document-table">
+        <thead>
+            <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Customization</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>
+                    <strong>@item.MenuItemName</strong>
+                    @if (item.SelectedCustomizations.Any())
+                    {
+                        <div class="muted">
+                            @string.Join(", ", item.SelectedCustomizations.Select(c => $"{c.GroupName}: {(c.IsRemovableIngredient ? "Remove " : "")}{c.OptionName}"))
+                        </div>
+                    }
+                </td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitPrice.ToString("C")</td>
+                <td>@item.CustomizationTotal.ToString("C")</td>
+                <td>@item.LineTotal.ToString("C")</td>
+            </tr>
+        }
+        </tbody>
+        <tfoot>
+            <tr><th colspan="4">Total Agreement Value</th><th>@Model.TotalPrice.ToString("C")</th></tr>
+        </tfoot>
+    </table>
+
+    <h3>2. Payment Confirmation</h3>
+    <p>
+        Payment of <strong>@Model.TotalPrice.ToString("C")</strong> was processed on
+        <strong>@(Model.PaidAt?.ToLocalTime().ToString("g") ?? "Pending")</strong>
+        via card ending in <strong>@Model.CardLastFourDigits</strong>.
+        Transaction reference: <strong>@Model.AgreementNumber</strong>.
+    </p>
+
+    <h3>3. Delivery Terms</h3>
+    <p>@Model.DeliveryTerms</p>
+
+    <h3>4. Cancellation Policy</h3>
+    <p>@Model.CancellationPolicy</p>
+
+    <h3>5. Liability</h3>
+    <p>WeHungry acts as an intermediary platform. Food quality and safety are the responsibility of the caterer.</p>
+
+    <h3>6. Acceptance</h3>
+    <p>
+        By completing the payment for this order, both parties acknowledge and agree to the terms outlined in this
+        Service Agreement. This document serves as a binding confirmation of the catering service arrangement.
+    </p>
+
+    <div class="agreement-signatures">
+        <div>
+            <strong>Customer</strong>
+            <div class="signature-line">@Model.CustomerName</div>
+            <small>@Model.CreatedAt.ToLocalTime().ToString("D")</small>
+        </div>
+        <div>
+            <strong>Caterer</strong>
+            <div class="signature-line">@Model.CatererBusinessName</div>
+            <small>@Model.CreatedAt.ToLocalTime().ToString("D")</small>
+        </div>
+    </div>
+
+    <div class="agreement-footer">
+        <p class="muted">
+            This agreement was generated automatically by WeHungry on @Model.GeneratedAt.ToLocalTime().ToString("g").
+            Document ID: @Model.AgreementNumber. This is not a static template — all data is generated dynamically from
+            order #@Model.Id records.
+        </p>
+    </div>
+</section>
